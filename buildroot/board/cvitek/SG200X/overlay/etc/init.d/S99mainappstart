@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Start ipc task
+#
+
+/usr/bin/main_app

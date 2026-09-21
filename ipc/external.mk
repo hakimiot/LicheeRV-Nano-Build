@@ -1,1 +1,1 @@
-include $(sort $(wildcard $(BR2_EXTERNAL)/../ipc/hello_world/*.mk))
+include $(sort $(wildcard $(BR2_EXTERNAL)/../ipc/main_app/*.mk))

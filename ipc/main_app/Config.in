@@ -1,7 +1,7 @@
-# ipc/hello_world/Config.in
+# ipc/main_app/Config.in
 
-config BR2_PACKAGE_HELLO_WORLD
-    bool "hello_world"
+config BR2_PACKAGE_MAIN_APP
+    bool "main_app"
     help
       Hello World application.
       

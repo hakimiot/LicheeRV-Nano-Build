@@ -1,75 +1,62 @@
 #include <chrono>
 #include <thread>
+#include <atomic>
+#include <csignal>
 #include "mainapp_log.h"
 #include "camera_capture.h"
+#include "image_handle.h"
+#include "decode_handle.h"
 
-/*
-// OpenCV
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
 
-// FFmpeg
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libswscale/swscale.h>
+std::atomic<bool> g_running(true);
+
+void signalHandler(int sig)
+{
+    LOG_I << "exit main_app...";
+    g_running = false;
 }
 
-// Paho MQTT C++
-#include <mqtt/client.h>
-
-int libtest(int argc, char **argv)
+int main(int argc, char **argv)
 {
-    std::cout << "===== 库链接测试 =====" << std::endl;
+    signal(SIGUSR1, signalHandler);
 
-    // 1. OpenCV
-    std::cout << "\n[1] OpenCV" << std::endl;
-    std::cout << "  OpenCV version: " << CV_VERSION << std::endl;
-    cv::Mat img(100, 100, CV_8UC3, cv::Scalar(0, 255, 0));
-    cv::Mat gray;
-    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-    std::cout << "  Mat created: " << img.cols << "x" << img.rows
-              << ", gray channels: " << gray.channels() << std::endl;
+    int fpsTime = 1000 / 30;
 
-    // 2. FFmpeg
-    std::cout << "\n[2] FFmpeg" << std::endl;
-    std::cout << "  avcodec version: " << avcodec_version() << std::endl;
-    std::cout << "  avformat version: " << avformat_version() << std::endl;
-    std::cout << "  avutil version: " << avutil_version() << std::endl;
-    const AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
-    if (codec) {
-        std::cout << "  H264 encoder found: " << codec->name << std::endl;
-    } else {
-        std::cout << "  H264 encoder not found (maybe disabled)" << std::endl;
+    CameraConfig cfg;
+    CameraCapture cameraCapture(cfg);
+
+    FILE *fp = fopen("./video.h264", "wb");
+    if (fp == nullptr) {
+        LOG_E << "fopen failed";
+        return -1;
     }
 
-    // 3. Paho MQTT C++
-    std::cout << "\n[3] Paho MQTT C++" << std::endl;
-    const std::string broker = "tcp://localhost:1883";
-    const std::string client_id = "rv_nano_test";
-    try {
-        mqtt::client client(broker, client_id);
-        std::cout << "  MQTT client created (broker: " << broker << ")" << std::endl;
-        std::cout << "  Client ID: " << client_id << std::endl;
-        // 不实际连接，只验证对象能创建
-    } catch (const mqtt::exception &e) {
-        std::cout << "  MQTT exception: " << e.what() << std::endl;
-    }
-
-    std::cout << "\n===== 测试完成 =====" << std::endl;
-    return 0;
-}
-*/
-
-int main(int argc, char **argv) 
-{
-    // libtest(argc, argv);
-
-    CameraCapture cameraCapture;
-    
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-    cameraCapture.SensorDumpYuv();
+    while (g_running) {
+        // 采集前
+        auto t1 = std::chrono::steady_clock::now();
+
+        VENC_STREAM_S stStream;
+        if (cameraCapture.GetVencStream(stStream)) {
+            // 遍历所有 pack，依次写入
+            for (CVI_U32 i = 0; i < stStream.u32PackCount; i++) {
+                fwrite(&stStream.pstPack[i].pu8Addr[0], 1,
+                    stStream.pstPack[i].u32Len, fp);
+            }
+            cameraCapture.ReleaseVencStream(stStream);
+        }
+
+        // 采集后
+        auto t2 = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        LOG_I << "ViGetChnFrame took " << elapsed << " ms";
+    }
+
+    // 回收资源
+    LOG_I << "Resource recycling";
+    fclose(fp);
+
     return 0;
 }

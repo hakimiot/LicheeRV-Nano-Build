@@ -41,6 +41,8 @@ override LDFLAGS += -L$(MW_PATH)/lib -L$(MW_PATH)/lib/3rd \
 # 所有源文件
 SRCS = main.cpp \
        src/camera_capture.cpp \
+       src/file_system.cpp \
+       src/image_handle.cpp \
        src/mainapp_log.cpp \
 
 OBJS = $(SRCS:.cpp=.o)

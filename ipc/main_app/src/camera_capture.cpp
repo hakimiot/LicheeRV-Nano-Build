@@ -4,7 +4,10 @@
 #include "mainapp_log.h"
 #include "camera_capture.h"
 
-CameraCapture::CameraCapture()
+CameraCapture::CameraCapture(const CameraConfig &cfg)
+    : m_cfg(cfg)
+    , m_frameBuffer(nullptr)
+    , m_bufferSize(0)
 {
     int ret = SysViInit();
     if (ret != CVI_SUCCESS) {
@@ -18,28 +21,124 @@ CameraCapture::CameraCapture()
 CameraCapture::~CameraCapture()
 {
     SysViDeinit();
+
+    if (m_frameBuffer) {
+        free(m_frameBuffer);
+        m_frameBuffer = nullptr;
+    }
 }
 
-CVI_S32 CameraCapture::SensorDumpYuv()
+RawFrame CameraCapture::ViGetChnFrame(CVI_U8 chn)
 {
-    CVI_U32 ok = 0, ng = 0;
-    CVI_U8  chn = 0;
-    int tmp;
-    struct timespec start, end;
+    RawFrame result = {nullptr, 0, 0, 0};
+    VIDEO_FRAME_INFO_S stVideoFrame;
 
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    if (ViGetChnFrame(chn) == CVI_SUCCESS) {
-        ++ok;
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        LOG_I << "ms consumed: " << (CVI_FLOAT)DiffInUs(start, end)/1000;
-    } else {
-        ++ng;
+    // 从 VPSS 通道取帧
+    if (CVI_VPSS_GetChnFrame(0, chn, &stVideoFrame, 3000) != 0) {
+        LOG_E << "CVI_VPSS_GetChnFrame NG";
+        return result;
     }
 
-    LOG_I << "VI GetChnFrame OK(" << ok << ") NG(" << ng << ")";
-    LOG_I << "Dump VI yuv TEST-PASS";
+    size_t image_size = stVideoFrame.stVFrame.u32Length[0]
+                      + stVideoFrame.stVFrame.u32Length[1]
+                      + stVideoFrame.stVFrame.u32Length[2];
+    CVI_U8 *vir_addr;
+    CVI_U32 plane_offset;
+    CVI_U32 width  = stVideoFrame.stVFrame.u32Width;
+    CVI_U32 height = stVideoFrame.stVFrame.u32Height;
 
-    return CVI_SUCCESS;
+    // 映射物理地址到虚拟地址
+    vir_addr = (CVI_U8 *)CVI_SYS_Mmap(stVideoFrame.stVFrame.u64PhyAddr[0], image_size);
+    CVI_SYS_IonInvalidateCache(stVideoFrame.stVFrame.u64PhyAddr[0], vir_addr, image_size);
+
+    plane_offset = 0;
+    for (int i = 0; i < 3; i++) {
+        if (stVideoFrame.stVFrame.u32Length[i] != 0) {
+            stVideoFrame.stVFrame.pu8VirAddr[i] = vir_addr + plane_offset;
+            plane_offset += stVideoFrame.stVFrame.u32Length[i];
+        }
+    }
+
+    // 计算 NV21 缓冲区大小（Y + UV）
+    size_t nv21_size = (size_t)width * height * 3 / 2;
+
+    // 只在尺寸变化或首次调用时分配
+    if (m_frameBuffer == nullptr || m_bufferSize < nv21_size) {
+        if (m_frameBuffer) {
+            free(m_frameBuffer);
+        }
+        m_frameBuffer = (uint8_t *)malloc(nv21_size);
+        if (m_frameBuffer == nullptr) {
+            LOG_E << "malloc failed";
+            CVI_SYS_Munmap(vir_addr, image_size);
+            CVI_VPSS_ReleaseChnFrame(0, chn, &stVideoFrame);
+            return result;
+        }
+        m_bufferSize = nv21_size;
+        LOG_I << "Frame buffer allocated: " << nv21_size << " bytes";
+    }
+
+    // 逐行拷贝 Y plane（跳过 stride padding）
+    for (CVI_U32 row = 0; row < height; row++) {
+        memcpy(m_frameBuffer + row * width,
+               stVideoFrame.stVFrame.pu8VirAddr[0] + row * stVideoFrame.stVFrame.u32Stride[0],
+               width);
+    }
+    // 逐行拷贝 UV plane
+    for (CVI_U32 row = 0; row < height / 2; row++) {
+        memcpy(m_frameBuffer + (size_t)width * height + row * width,
+               stVideoFrame.stVFrame.pu8VirAddr[1] + row * stVideoFrame.stVFrame.u32Stride[1],
+               width);
+    }
+
+    result.data   = m_frameBuffer;
+    result.size   = nv21_size;
+    result.width  = width;
+    result.height = height;
+
+    CVI_SYS_Munmap(vir_addr, image_size);
+
+    if (CVI_VPSS_ReleaseChnFrame(0, chn, &stVideoFrame) != 0)
+        LOG_E << "CVI_VPSS_ReleaseChnFrame NG";
+
+    return result;
+}
+
+bool CameraCapture::GetVencStream(VENC_STREAM_S &stStream)
+{
+    VENC_CHN_STATUS_S stStat;
+    memset(&stStat, 0, sizeof(stStat));
+
+    // 先查询状态，确保有码流可拿
+    if (CVI_VENC_QueryStatus(m_vencChn, &stStat) != CVI_SUCCESS || stStat.u32CurPacks == 0) {
+        return false;
+    }
+
+    // 必须为 pstPack 分配空间，否则 GetStream 会报错
+    stStream.pstPack = (VENC_PACK_S *)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
+    if (stStream.pstPack == nullptr) {
+        return false;
+    }
+
+    // 获取码流 100ms 超时
+    if (CVI_VENC_GetStream(m_vencChn, &stStream, 100) != CVI_SUCCESS) {
+        free(stStream.pstPack);
+        stStream.pstPack = nullptr;
+        return false;
+    }
+    return true;
+}
+
+void CameraCapture::ReleaseVencStream(VENC_STREAM_S &stStream)
+{
+    if (stStream.pstPack) {
+        CVI_S32 s32Ret = CVI_VENC_ReleaseStream(m_vencChn, &stStream);
+        if (s32Ret != CVI_SUCCESS) {
+            LOG_E << "CVI_VENC_ReleaseStream NG, ret: " << s32Ret;
+        }
+        free(stStream.pstPack);
+        stStream.pstPack = nullptr;
+    }
 }
 
 int CameraCapture::SysViInit()
@@ -60,13 +159,14 @@ int CameraCapture::SysViInit()
     log_conf.s32Level = CVI_DBG_INFO;
     CVI_LOG_SetLevelConf(&log_conf);
 
-    // Get config from ini if found.
+    // 解析 ini 配置
     if (SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
         LOG_I << "Parse complete";
     }
 
-    //Set sensor number
+    // 设置 sensor 数量
     CVI_VI_SetDevNum(stIniCfg.devNum);
+
     /************************************************
      * step1:  Config VI
      ************************************************/
@@ -93,7 +193,7 @@ int CameraCapture::SysViInit()
     }
 
     /************************************************
-     * step3:  Init modules
+     * step3:  Init SYS and VI
      ************************************************/
     s32Ret = SAMPLE_PLAT_SYS_INIT(stSize);
     if (s32Ret != CVI_SUCCESS) {
@@ -107,83 +207,148 @@ int CameraCapture::SysViInit()
         return s32Ret;
     }
 
+    /************************************************
+     * step4:  Init VPSS
+     ************************************************/
+    CVI_VPSS_StopGrp(0);
+    CVI_VPSS_DestroyGrp(0);
+
+    VPSS_GRP VpssGrp = 0;
+    VPSS_GRP_ATTR_S stVpssGrpAttr;
+    VPSS_CHN_ATTR_S astVpssChnAttr[VPSS_MAX_PHY_CHN_NUM] = {0};
+    CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
+
+    memset(&stVpssGrpAttr, 0, sizeof(stVpssGrpAttr));
+    stVpssGrpAttr.stFrameRate.s32SrcFrameRate = -1;
+    stVpssGrpAttr.stFrameRate.s32DstFrameRate = -1;
+    stVpssGrpAttr.enPixelFormat = PIXEL_FORMAT_NV21;
+    stVpssGrpAttr.u32MaxW = m_cfg.maxWidth;
+    stVpssGrpAttr.u32MaxH = m_cfg.maxHeight;
+    stVpssGrpAttr.u8VpssDev = 0;
+
+    // 使用配置变量
+    astVpssChnAttr[0].u32Width  = m_cfg.width;
+    astVpssChnAttr[0].u32Height = m_cfg.height;
+    astVpssChnAttr[0].enVideoFormat = VIDEO_FORMAT_LINEAR;
+    astVpssChnAttr[0].enPixelFormat = PIXEL_FORMAT_NV21;
+    astVpssChnAttr[0].stFrameRate.s32SrcFrameRate = m_cfg.srcFps;
+    astVpssChnAttr[0].stFrameRate.s32DstFrameRate = m_cfg.dstFps;
+    astVpssChnAttr[0].u32Depth = 3;
+    astVpssChnAttr[0].stAspectRatio.enMode = ASPECT_RATIO_NONE;
+
+    abChnEnable[0] = CVI_TRUE;
+    s32Ret = SAMPLE_COMM_VPSS_Init(VpssGrp, abChnEnable, &stVpssGrpAttr, astVpssChnAttr);
+    if (s32Ret != CVI_SUCCESS) {
+        LOG_E << "VPSS init failed";
+        return s32Ret;
+    }
+
+    s32Ret = SAMPLE_COMM_VPSS_Start(VpssGrp, abChnEnable, &stVpssGrpAttr, astVpssChnAttr);
+    if (s32Ret != CVI_SUCCESS) {
+        LOG_E << "VPSS start failed";
+        return s32Ret;
+    }
+
+    s32Ret = SAMPLE_COMM_VI_Bind_VPSS(0, 0, VpssGrp);
+    if (s32Ret != CVI_SUCCESS) {
+        LOG_E << "VI bind VPSS failed";
+        return s32Ret;
+    }
+
+    /************************************************
+     * step5:  Init VENC
+     ************************************************/
+    VENC_CHN_ATTR_S stVencChnAttr;
+    memset(&stVencChnAttr, 0, sizeof(stVencChnAttr));
+
+    stVencChnAttr.stVencAttr.enType = PT_H264;
+    stVencChnAttr.stVencAttr.u32MaxPicWidth  = m_cfg.width;
+    stVencChnAttr.stVencAttr.u32MaxPicHeight = m_cfg.height;
+    stVencChnAttr.stVencAttr.u32PicWidth     = m_cfg.width;
+    stVencChnAttr.stVencAttr.u32PicHeight    = m_cfg.height;
+    stVencChnAttr.stVencAttr.u32BufSize      = m_cfg.width * m_cfg.height * 3 / 2;
+    stVencChnAttr.stVencAttr.u32Profile = 0;
+    stVencChnAttr.stVencAttr.bByFrame = CVI_TRUE;
+    stVencChnAttr.stVencAttr.bSingleCore = CVI_TRUE;
+    stVencChnAttr.stVencAttr.bEsBufQueueEn = CVI_TRUE;
+    stVencChnAttr.stVencAttr.bIsoSendFrmEn = CVI_TRUE;
+    stVencChnAttr.stVencAttr.stAttrH264e.bRcnRefShareBuf = CVI_FALSE;
+    stVencChnAttr.stVencAttr.stAttrH264e.bSingleLumaBuf = CVI_FALSE;
+
+    stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
+    stVencChnAttr.stRcAttr.stH264Cbr.u32BitRate        = m_cfg.bitrate;
+    stVencChnAttr.stRcAttr.stH264Cbr.u32SrcFrameRate   = m_cfg.srcFps;
+    stVencChnAttr.stRcAttr.stH264Cbr.fr32DstFrameRate  = m_cfg.dstFps;
+    stVencChnAttr.stRcAttr.stH264Cbr.u32Gop            = m_cfg.gop;
+
+    stVencChnAttr.stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
+
+    s32Ret = CVI_VENC_CreateChn(m_vencChn, &stVencChnAttr);
+    if (s32Ret != CVI_SUCCESS) {
+        LOG_E << "CVI_VENC_CreateChn failed";
+        return s32Ret;
+    }
+
+    // 先绑定，再启动
+    s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(VpssGrp, 0, m_vencChn);
+    if (s32Ret != CVI_SUCCESS) {
+        LOG_E << "VPSS bind VENC failed";
+        return s32Ret;
+    }
+
+    VENC_RECV_PIC_PARAM_S stRecvParam;
+    memset(&stRecvParam, 0, sizeof(stRecvParam));
+    stRecvParam.s32RecvPicNum = -1;
+    s32Ret = CVI_VENC_StartRecvFrame(m_vencChn, &stRecvParam);
+    if (s32Ret != CVI_SUCCESS) {
+        LOG_E << "CVI_VENC_StartRecvFrame failed";
+        return s32Ret;
+    }
+
     return CVI_SUCCESS;
 }
 
 void CameraCapture::SysViDeinit()
 {
-    SAMPLE_COMM_VI_DestroyIsp(&m_stViConfig);
-    SAMPLE_COMM_VI_DestroyVi(&m_stViConfig);
+    CVI_S32 ret;
+
+    // ===== 1. 停止并销毁 VENC =====
+    ret = CVI_VENC_StopRecvFrame(m_vencChn);
+    LOG_I << "StopRecvFrame ret: " << ret;
+
+    ret = SAMPLE_COMM_VPSS_UnBind_VENC(0, 0, m_vencChn);
+    LOG_I << "UnBind_VENC ret: " << ret;
+
+    ret = CVI_VENC_DestroyChn(m_vencChn);
+    LOG_I << "DestroyChn ret: " << ret;
+
+    // ===== 2. 解绑并销毁 VPSS =====
+    ret = SAMPLE_COMM_VI_UnBind_VPSS(0, 0, 0);
+    LOG_I << "UnBind_VPSS ret: " << ret;
+
+    CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
+    abChnEnable[0] = CVI_TRUE;
+
+    ret = CVI_VPSS_DisableChn(0, 0);
+    LOG_I << "VPSS_DisableChn ret: " << ret;
+
+    ret = SAMPLE_COMM_VPSS_Stop(0, abChnEnable);
+    LOG_I << "VPSS_Stop ret: " << ret;
+
+    ret = CVI_VPSS_StopGrp(0);
+    LOG_I << "VPSS_StopGrp ret: " << ret;
+
+    ret = CVI_VPSS_DestroyGrp(0);
+    LOG_I << "VPSS_DestroyGrp ret: " << ret;
+
+    // ===== 3. 销毁 VI 和 SYS =====
+    ret = SAMPLE_COMM_VI_DestroyIsp(&m_stViConfig);
+    LOG_I << "VI_DestroyIsp ret: " << ret;
+
+    ret = SAMPLE_COMM_VI_DestroyVi(&m_stViConfig);
+    LOG_I << "VI_DestroyVi ret: " << ret;
+
     SAMPLE_COMM_SYS_Exit();
-}
-
-CVI_S32 CameraCapture::ViGetChnFrame(CVI_U8 chn)
-{
-    VIDEO_FRAME_INFO_S stVideoFrame;
-    VI_CROP_INFO_S crop_info = {0};
-
-    if (CVI_VI_GetChnFrame(0, chn, &stVideoFrame, 3000) == 0) {
-        FILE *output;
-        size_t image_size = stVideoFrame.stVFrame.u32Length[0] + stVideoFrame.stVFrame.u32Length[1]
-                  + stVideoFrame.stVFrame.u32Length[2];
-        CVI_U8 *vir_addr;
-        CVI_U32 plane_offset, u32LumaSize, u32ChromaSize;
-        CVI_CHAR img_name[128] = {0, };
-
-        LOG_I << "width: " << stVideoFrame.stVFrame.u32Width
-              << ", height: " << stVideoFrame.stVFrame.u32Height
-              << ", total_buf_length: " << image_size;
-
-        snprintf(img_name, sizeof(img_name), "sample_%d.yuv", chn);
-
-        output = fopen(img_name, "wb");
-        if (output == NULL) {
-            memset(img_name, 0x0, sizeof(img_name));
-            snprintf(img_name, sizeof(img_name), "/mnt/data/sample_%d.yuv", chn);
-            output = fopen(img_name, "wb");
-            if (output == NULL) {
-                CVI_VI_ReleaseChnFrame(0, chn, &stVideoFrame);
-                LOG_E << "fopen fail";
-                return CVI_FAILURE;
-            }
-        }
-
-        u32LumaSize =  stVideoFrame.stVFrame.u32Stride[0] * stVideoFrame.stVFrame.u32Height;
-        u32ChromaSize =  stVideoFrame.stVFrame.u32Stride[1] * stVideoFrame.stVFrame.u32Height / 2;
-        CVI_VI_GetChnCrop(0, chn, &crop_info);
-        if (crop_info.bEnable) {
-            u32LumaSize = ALIGN((crop_info.stCropRect.u32Width * 8 + 7) >> 3, DEFAULT_ALIGN) *
-                ALIGN(crop_info.stCropRect.u32Height, 2);
-            u32ChromaSize = (ALIGN(((crop_info.stCropRect.u32Width >> 1) * 8 + 7) >> 3, DEFAULT_ALIGN) *
-                ALIGN(crop_info.stCropRect.u32Height, 2)) >> 1;
-        }
-
-        vir_addr = (CVI_U8 *)CVI_SYS_Mmap(stVideoFrame.stVFrame.u64PhyAddr[0], image_size);
-        CVI_SYS_IonInvalidateCache(stVideoFrame.stVFrame.u64PhyAddr[0], vir_addr, image_size);
-
-        plane_offset = 0;
-        for (int i = 0; i < 3; i++) {
-            if (stVideoFrame.stVFrame.u32Length[i] != 0) {
-                stVideoFrame.stVFrame.pu8VirAddr[i] = vir_addr + plane_offset;
-                plane_offset += stVideoFrame.stVFrame.u32Length[i];
-                LOG_I << "plane(" << i << "): paddr(" << std::hex << stVideoFrame.stVFrame.u64PhyAddr[i]
-                      << ") vaddr(" << static_cast<void*>(stVideoFrame.stVFrame.pu8VirAddr[i])
-                      << ") stride(" << std::dec << stVideoFrame.stVFrame.u32Stride[i]
-                      << ") length(" << stVideoFrame.stVFrame.u32Length[i] << ")";
-                fwrite((void *)stVideoFrame.stVFrame.pu8VirAddr[i]
-                    , (i == 0) ? u32LumaSize : u32ChromaSize, 1, output);
-            }
-        }
-        CVI_SYS_Munmap(vir_addr, image_size);
-
-        if (CVI_VI_ReleaseChnFrame(0, chn, &stVideoFrame) != 0)
-            LOG_E << "CVI_VI_ReleaseChnFrame NG";
-
-        fclose(output);
-        return CVI_SUCCESS;
-    }
-    LOG_E << "CVI_VI_GetChnFrame NG";
-    return CVI_FAILURE;
 }
 
 long CameraCapture::DiffInUs(struct timespec t1, struct timespec t2)

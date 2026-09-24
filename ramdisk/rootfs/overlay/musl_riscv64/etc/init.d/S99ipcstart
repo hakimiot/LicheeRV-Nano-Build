@@ -1,6 +1,0 @@
-#!/bin/sh
-#
-# Start ipc task
-#
-
-/usr/bin/hello_world

@@ -13,14 +13,12 @@ std::atomic<bool> g_running(true);
 
 void signalHandler(int sig)
 {
-    LOG_I << "exit main_app...";
-    g_running = false;
+    (void)sig;
+    g_running.store(false, std::memory_order_relaxed);
 }
 
 int main(int argc, char **argv)
 {
-    signal(SIGUSR1, signalHandler);
-
     int fpsTime = 1000 / 30;
 
     CameraConfig cfg;
@@ -32,6 +30,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    signal(SIGINT, signalHandler);
+
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
     while (g_running) {
@@ -42,8 +42,14 @@ int main(int argc, char **argv)
         if (cameraCapture.GetVencStream(stStream)) {
             // 遍历所有 pack，依次写入
             for (CVI_U32 i = 0; i < stStream.u32PackCount; i++) {
-                fwrite(&stStream.pstPack[i].pu8Addr[0], 1,
-                    stStream.pstPack[i].u32Len, fp);
+                fwrite(
+                    stStream.pstPack[i].pu8Addr +
+                        stStream.pstPack[i].u32Offset,
+                    1,
+                    stStream.pstPack[i].u32Len -
+                        stStream.pstPack[i].u32Offset,
+                    fp
+                );
             }
             cameraCapture.ReleaseVencStream(stStream);
         }
@@ -55,7 +61,7 @@ int main(int argc, char **argv)
     }
 
     // 回收资源
-    LOG_I << "Resource recycling";
+    LOG_I << "exit main_app...";
     fclose(fp);
 
     return 0;

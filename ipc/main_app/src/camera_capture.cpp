@@ -106,26 +106,69 @@ RawFrame CameraCapture::ViGetChnFrame(CVI_U8 chn)
 
 bool CameraCapture::GetVencStream(VENC_STREAM_S &stStream)
 {
+    memset(&stStream, 0, sizeof(stStream));
+
     VENC_CHN_STATUS_S stStat;
     memset(&stStat, 0, sizeof(stStat));
 
-    // 先查询状态，确保有码流可拿
-    if (CVI_VENC_QueryStatus(m_vencChn, &stStat) != CVI_SUCCESS || stStat.u32CurPacks == 0) {
+    CVI_S32 ret = CVI_VENC_QueryStatus(m_vencChn, &stStat);
+
+    if (ret != CVI_SUCCESS) {
+        LOG_E << "CVI_VENC_QueryStatus failed, ret=0x"
+              << std::hex << ret;
         return false;
     }
 
-    // 必须为 pstPack 分配空间，否则 GetStream 会报错
-    stStream.pstPack = (VENC_PACK_S *)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
+    LOG_D << "VENC status: "
+          << "CurPacks=" << std::dec << stStat.u32CurPacks;
+
+    if (stStat.u32CurPacks == 0) {
+        return false;
+    }
+
+    stStream.pstPack =
+        (VENC_PACK_S *)calloc(
+            stStat.u32CurPacks,
+            sizeof(VENC_PACK_S)
+        );
+
     if (stStream.pstPack == nullptr) {
+        LOG_E << "malloc VENC_PACK_S failed";
         return false;
     }
 
-    // 获取码流 100ms 超时
-    if (CVI_VENC_GetStream(m_vencChn, &stStream, 100) != CVI_SUCCESS) {
+    auto t1 = std::chrono::steady_clock::now();
+
+    ret = CVI_VENC_GetStream(
+        m_vencChn,
+        &stStream,
+        100
+    );
+
+    auto t2 = std::chrono::steady_clock::now();
+
+    auto elapsed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            t2 - t1
+        ).count();
+
+    if (ret != CVI_SUCCESS) {
+        LOG_E << "CVI_VENC_GetStream failed, "
+              << "ret=0x" << std::hex << ret
+              << ", elapsed=" << std::dec << elapsed
+              << " ms"
+              << ", expected packs=" << stStat.u32CurPacks;
+
         free(stStream.pstPack);
         stStream.pstPack = nullptr;
+
         return false;
     }
+
+    LOG_D << "CVI_VENC_GetStream success, "
+          << "packCount=" << stStream.u32PackCount
+          << ", elapsed=" << elapsed << " ms";
+
     return true;
 }
 
@@ -210,9 +253,6 @@ int CameraCapture::SysViInit()
     /************************************************
      * step4:  Init VPSS
      ************************************************/
-    CVI_VPSS_StopGrp(0);
-    CVI_VPSS_DestroyGrp(0);
-
     VPSS_GRP VpssGrp = 0;
     VPSS_GRP_ATTR_S stVpssGrpAttr;
     VPSS_CHN_ATTR_S astVpssChnAttr[VPSS_MAX_PHY_CHN_NUM] = {0};
@@ -311,44 +351,51 @@ int CameraCapture::SysViInit()
 void CameraCapture::SysViDeinit()
 {
     CVI_S32 ret;
+    LOG_I << "========== CameraCapture Deinit ==========";
 
-    // ===== 1. 停止并销毁 VENC =====
-    ret = CVI_VENC_StopRecvFrame(m_vencChn);
-    LOG_I << "StopRecvFrame ret: " << ret;
-
+    // ============================================================
+    // 1. VENC
+    // ============================================================
+    // 解除 VPSS -> VENC
     ret = SAMPLE_COMM_VPSS_UnBind_VENC(0, 0, m_vencChn);
     LOG_I << "UnBind_VENC ret: " << ret;
 
+    // 停止 VENC 接收帧
+    ret = CVI_VENC_StopRecvFrame(m_vencChn);
+    LOG_I << "StopRecvFrame ret: " << ret;
+
+    // 销毁 VENC channel
     ret = CVI_VENC_DestroyChn(m_vencChn);
     LOG_I << "DestroyChn ret: " << ret;
 
-    // ===== 2. 解绑并销毁 VPSS =====
+    // ============================================================
+    // 2. VPSS
+    // ============================================================
+    // 解除 VI -> VPSS
     ret = SAMPLE_COMM_VI_UnBind_VPSS(0, 0, 0);
     LOG_I << "UnBind_VPSS ret: " << ret;
 
     CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
     abChnEnable[0] = CVI_TRUE;
 
-    ret = CVI_VPSS_DisableChn(0, 0);
-    LOG_I << "VPSS_DisableChn ret: " << ret;
-
     ret = SAMPLE_COMM_VPSS_Stop(0, abChnEnable);
     LOG_I << "VPSS_Stop ret: " << ret;
 
-    ret = CVI_VPSS_StopGrp(0);
-    LOG_I << "VPSS_StopGrp ret: " << ret;
-
-    ret = CVI_VPSS_DestroyGrp(0);
-    LOG_I << "VPSS_DestroyGrp ret: " << ret;
-
-    // ===== 3. 销毁 VI 和 SYS =====
+    // ============================================================
+    // 3. VI / ISP
+    // ============================================================
     ret = SAMPLE_COMM_VI_DestroyIsp(&m_stViConfig);
     LOG_I << "VI_DestroyIsp ret: " << ret;
 
     ret = SAMPLE_COMM_VI_DestroyVi(&m_stViConfig);
     LOG_I << "VI_DestroyVi ret: " << ret;
 
+    // ============================================================
+    // 4. SYS / VB
+    // ============================================================
     SAMPLE_COMM_SYS_Exit();
+
+    LOG_I << "========== CameraCapture Deinit Done ==========";
 }
 
 long CameraCapture::DiffInUs(struct timespec t1, struct timespec t2)

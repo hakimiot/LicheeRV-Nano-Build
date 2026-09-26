@@ -4,19 +4,25 @@
 #include <vector>
 // #include "json.hpp"
 
+#define SIZE_KB 1024
+#define SIZE_MB (1024 * SIZE_KB)
+#define SIZE_GB (1024 * SIZE_MB)
+
+#define SIZE_128MB (128 * SIZE_MB)
+
 typedef struct {
     std::string filename;
     long long size;
     int seconds;
 } AviFileInfo;
 
-class FileSystem
+namespace FileSystem
 {
-public:
-    static long long size(const char *filename);
-    static uint64_t AviTotalSize(const char *directory);
-    static double VideoDuration(const std::string& filename);
+    bool MakeDirs(const std::string& path);
 
-    static std::vector<AviFileInfo> AviList(const char *directory);
-    // static nlohmann::json_abi_v3_12_0::json AviListJson(const char *directory);
+    long long size(const char *filename);
+    uint64_t AviTotalSize(const char *directory);
+    double VideoDuration(const std::string& filename);
+
+    std::vector<AviFileInfo> AviList(const char *directory);
 };

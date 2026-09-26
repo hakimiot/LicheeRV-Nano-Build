@@ -44,6 +44,8 @@ SRCS = main.cpp \
        src/file_system.cpp \
        src/image_handle.cpp \
        src/mainapp_log.cpp \
+       src/rtmp_streamer.cpp \
+       src/video_writer.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 

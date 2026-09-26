@@ -8,6 +8,27 @@
 #include "mainapp_log.h"
 #include "file_system.h"
 
+bool FileSystem::MakeDirs(const std::string& path)
+{
+    if (path.empty()) return false;
+
+    std::string tmp;
+    for (size_t i = 0; i < path.size(); i++) {
+        tmp += path[i];
+        if (path[i] == '/' || i == path.size() - 1) {
+            if (tmp == "/" || tmp.empty()) continue;
+
+            if (mkdir(tmp.c_str(), 0755) != 0) {
+                if (errno != EEXIST) {
+                    LOG_E << "mkdir failed: " << tmp << ", errno: " << errno;
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 long long FileSystem::size(const char *filename)
 {
     FILE* file = fopen(filename, "rb");
@@ -125,45 +146,3 @@ std::vector<AviFileInfo> FileSystem::AviList(const char *directory)
     closedir(dir);
     return list;
 }
-
-// nlohmann::json_abi_v3_12_0::json FileSystem::AviListJson(const char *directory)
-// {
-//     nlohmann::json_abi_v3_12_0::json array = nlohmann::json_abi_v3_12_0::json::array();
-//     DIR* dir = opendir(directory);
-//     if (!dir) {
-//         LOG_E << "Can not open dir: " << directory;
-//         return array;
-//     }
-
-//     struct dirent* entry;
-//     while ((entry = readdir(dir)) != nullptr) {
-//         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || entry->d_type != DT_DIR) {
-//             continue;
-//         }
-
-//         nlohmann::json_abi_v3_12_0::json videos = nlohmann::json_abi_v3_12_0::json::array();
-//         std::string fullPath = std::string(directory) + "/" + entry->d_name;
-//         std::vector<AviFileInfo> infos = AviList(fullPath.c_str());
-//         if (infos.size() == 0) {
-//             continue;
-//         }
-
-//         for (const AviFileInfo& info : infos) {
-//             nlohmann::json_abi_v3_12_0::json item;
-//             item["file"] = info.filename;
-//             item["size"] = info.size;
-//             item["sec"] = info.seconds;
-//             videos.push_back(item);
-//         }
-
-//         nlohmann::json_abi_v3_12_0::json videoItem = {
-//             {"date", entry->d_name},
-//             {"count", infos.size()},
-//             {"videos", videos}
-//         };
-//         array.push_back(videoItem);
-//     }
-
-//     closedir(dir);
-//     return array;
-// }

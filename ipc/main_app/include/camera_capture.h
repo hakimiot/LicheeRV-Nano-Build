@@ -7,7 +7,7 @@
 
 #include "image_handle.h"
 
-// ===== 配置结构体 =====
+// 配置结构体
 struct CameraConfig {
     uint32_t width     = 1280;
     uint32_t height    = 720;
@@ -28,11 +28,11 @@ public:
     RawFrame ViGetChnFrame(CVI_U8 chn);
     bool GetVencStream(VENC_STREAM_S &stStream);
     void ReleaseVencStream(VENC_STREAM_S &stStream);
-
-private:
-    int SysViInit(void);
+    
+    int SysViInit();
     void SysViDeinit();
 
+private:
     long DiffInUs(struct timespec t1, struct timespec t2);
 
     SAMPLE_VI_CONFIG_S m_stViConfig;

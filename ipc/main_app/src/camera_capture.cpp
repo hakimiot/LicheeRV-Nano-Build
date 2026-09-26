@@ -8,13 +8,11 @@ CameraCapture::CameraCapture(const CameraConfig &cfg)
     : m_cfg(cfg)
     , m_frameBuffer(nullptr)
     , m_bufferSize(0)
+    , m_initStatus(false)
 {
     int ret = SysViInit();
     if (ret != CVI_SUCCESS) {
         LOG_E << "sys vi init failed";
-        m_initStatus = false;
-    } else {
-        m_initStatus = true;
     }
 }
 
@@ -32,6 +30,11 @@ RawFrame CameraCapture::ViGetChnFrame(CVI_U8 chn)
 {
     RawFrame result = {nullptr, 0, 0, 0};
     VIDEO_FRAME_INFO_S stVideoFrame;
+
+    if (m_initStatus == false) {
+        LOG_E << "System not init";
+        return result;
+    }
 
     // 从 VPSS 通道取帧
     if (CVI_VPSS_GetChnFrame(0, chn, &stVideoFrame, 3000) != 0) {
@@ -106,6 +109,11 @@ RawFrame CameraCapture::ViGetChnFrame(CVI_U8 chn)
 
 bool CameraCapture::GetVencStream(VENC_STREAM_S &stStream)
 {
+    if (m_initStatus == false) {
+        LOG_E << "System not init";
+        return false;
+    }
+
     memset(&stStream, 0, sizeof(stStream));
 
     VENC_CHN_STATUS_S stStat;
@@ -186,6 +194,11 @@ void CameraCapture::ReleaseVencStream(VENC_STREAM_S &stStream)
 
 int CameraCapture::SysViInit()
 {
+    if (m_initStatus == true) { // 重复初始化视为初始化成功，打印日志警告
+        LOG_W << "System not init";
+        return CVI_SUCCESS;
+    }
+
     MMF_VERSION_S stVersion;
     SAMPLE_INI_CFG_S stIniCfg;
     SAMPLE_VI_CONFIG_S stViConfig;
@@ -345,12 +358,19 @@ int CameraCapture::SysViInit()
         return s32Ret;
     }
 
+    m_initStatus = true;
     return CVI_SUCCESS;
 }
 
 void CameraCapture::SysViDeinit()
 {
     CVI_S32 ret;
+    
+    if (m_initStatus == false) { // 未初始化，打印日志警告
+        LOG_W << "System not init";
+        return;
+    }
+
     LOG_I << "========== CameraCapture Deinit ==========";
 
     // ============================================================
@@ -394,6 +414,7 @@ void CameraCapture::SysViDeinit()
     // 4. SYS / VB
     // ============================================================
     SAMPLE_COMM_SYS_Exit();
+    m_initStatus = false;
 
     LOG_I << "========== CameraCapture Deinit Done ==========";
 }

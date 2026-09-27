@@ -11,7 +11,7 @@ VideoWriter::VideoWriter()
     : m_totalWritten(0)
     , m_maxFileSize(SIZE_128MB) // 每个文件默认最大 128MB
 {
-    m_filename = GetTimestampFilename("media", "h264");
+    m_filename = GetTimestampFilename("/media", "h264");
     m_ofs = std::ofstream(m_filename, std::ios::binary);
     if (!m_ofs.is_open()) {
         LOG_E << "Failed to open: " << m_filename;
@@ -31,7 +31,7 @@ void VideoWriter::OpenNewFile()
     m_ofs.close();
     m_totalWritten = 0;
 
-    m_filename = GetTimestampFilename("media/", "h264");
+    m_filename = GetTimestampFilename("/media", "h264");
     m_ofs = std::ofstream(m_filename, std::ios::binary);
     if (!m_ofs.is_open()) {
         LOG_E << "Failed to open: " << m_filename;

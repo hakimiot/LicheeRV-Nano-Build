@@ -108,6 +108,8 @@ void RTMPStreamer::Stop()
     }
 
     m_running = false;
+    m_streaming = false;
+
     m_queueCv.notify_all();
     if (m_streamThread.joinable()) {
         m_streamThread.join();
@@ -229,8 +231,10 @@ void RTMPStreamer::StreamLoop()
             av_strerror(ret, errbuf, sizeof(errbuf));
             LOG_W << "Write frame failed: " << errbuf;
             m_connected = false;
+            m_streaming = false;
             m_reconnectRequested = true;
         } else {
+            m_streaming = true;
             avio_flush(m_formatCtx->pb);
         }
     }
@@ -243,6 +247,8 @@ bool RTMPStreamer::ReinitRtmp()
     LOG_I << "Reinit RTMP connection...";
     bool result = InitInternal();
     m_connected = result;
+    m_streaming = false;
+
     if (result) {
         m_reconnectRequested = false;
         LOG_I << "RTMP reconnect success";

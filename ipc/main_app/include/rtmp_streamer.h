@@ -36,6 +36,7 @@ public:
 
     // 状态查询
     bool IsConnected() const { return m_connected; }
+    bool IsStreaming() const { return m_streaming; }
     void SetRtmpUrl(const std::string& url);
     std::string GetRtmpUrl() const { return m_url; }
     void SetResolution(int width, int height);
@@ -78,6 +79,7 @@ private:
     std::thread m_streamThread;
     std::atomic<bool> m_running{false};
     std::atomic<bool> m_connected{false};
+    std::atomic<bool> m_streaming{false};
 
     // 重连
     std::atomic<bool> m_reconnectRequested{false};

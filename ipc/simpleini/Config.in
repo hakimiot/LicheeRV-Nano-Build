@@ -1,0 +1,4 @@
+config BR2_PACKAGE_SIMPLEINI
+	bool "simpleini"
+	help
+	  SimpleIni is a simple C++ library for reading and writing INI files.

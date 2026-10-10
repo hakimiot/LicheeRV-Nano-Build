@@ -1,1 +1,3 @@
-source "../ipc/main_app/Config.in"
+source "$BR2_EXTERNAL_IPC_PATH/main_app/Config.in"
+source "$BR2_EXTERNAL_IPC_PATH/cpp-httplib/Config.in"
+source "$BR2_EXTERNAL_IPC_PATH/simpleini/Config.in"

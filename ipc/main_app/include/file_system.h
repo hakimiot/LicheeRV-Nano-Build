@@ -21,8 +21,5 @@ namespace FileSystem
     bool MakeDirs(const std::string& path);
 
     long long size(const char *filename);
-    uint64_t AviTotalSize(const char *directory);
-    double VideoDuration(const std::string& filename);
 
-    std::vector<AviFileInfo> AviList(const char *directory);
 };

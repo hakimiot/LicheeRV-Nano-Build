@@ -13,9 +13,10 @@ MW_3RD_LIB = $(MW_PATH)/lib/3rd
 
 # 头文件目录
 override CFLAGS += -Iinclude
+override CFLAGS += -I$(STAGING_DIR)/usr/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include/ffmpeg
-override CFLAGS += -I$(STAGING_DIR)/usr/include/opencv4
 override CFLAGS += -I$(STAGING_DIR)/usr/include/mqtt
+override CFLAGS += -I$(STAGING_DIR)/usr/include/json-for-modern-cpp
 override CFLAGS += -I$(MW_PATH)/include
 override CFLAGS += -I$(MW_PATH)/sample/common
 override CFLAGS += -I$(MW_PATH)/modules/sys/include
@@ -24,7 +25,7 @@ override CFLAGS += -I$(MW_PATH)/modules/isp/include/sg200x
 override CFLAGS += -I$(INTERDRV_PATH)/include/common/uapi
 override CFLAGS += -I$(INTERDRV_PATH)/include/chip/mars/uapi/
 
-override LDFLAGS += -lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_videoio
+override LDFLAGS += -lpam
 override LDFLAGS += -lavcodec -lavformat -lavutil -lswscale
 override LDFLAGS += -lpaho-mqttpp3 -lpaho-mqtt3a
 override LDFLAGS += $(MW_LIBS)
@@ -39,13 +40,15 @@ override LDFLAGS += -L$(MW_PATH)/lib -L$(MW_PATH)/lib/3rd \
                     -Wl,--end-group
 
 # 所有源文件
-SRCS = main.cpp \
-       src/camera_capture.cpp \
-       src/file_system.cpp \
-       src/image_handle.cpp \
-       src/mainapp_log.cpp \
-       src/rtmp_streamer.cpp \
-       src/video_writer.cpp \
+SRCS = main.cpp
+SRCS += src/camera_capture.cpp
+SRCS += src/device_safe.cpp
+SRCS += src/file_system.cpp
+SRCS += src/http_server.cpp
+SRCS += src/mainapp_log.cpp
+SRCS += src/random.cpp
+SRCS += src/rtmp_streamer.cpp
+SRCS += src/video_writer.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

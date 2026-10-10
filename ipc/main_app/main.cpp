@@ -2,11 +2,13 @@
 #include <thread>
 #include <atomic>
 #include <csignal>
+#include <SimpleIni.h>
 #include "mainapp_log.h"
 #include "camera_capture.h"
 #include "ring_queue.h"
 #include "video_writer.h"
 #include "rtmp_streamer.h"
+#include "http_server.h"
 
 std::atomic<bool> g_running(true);
 
@@ -14,6 +16,14 @@ static void SignalHandler(int sig)
 {
     (void)sig;
     g_running.store(false, std::memory_order_relaxed);
+}
+
+static void SignalRegister(void)
+{
+    signal(SIGINT, SignalHandler);
+    signal(SIGTERM, SignalHandler);
+    signal(SIGQUIT, SignalHandler);
+    signal(SIGHUP, SignalHandler);
 }
 
 /**
@@ -81,28 +91,54 @@ static void SaveThread(RingQueue<StreamPacket>& queue, std::atomic<bool>& runnin
 }
 
 /**
+ * HTTP线程
+ */
+static void HttpThread(HttpServer& server, DataContext& context)
+{
+    server.start();
+}
+
+/**
  * 主函数
  */
 int main(int argc, char **argv)
 {
-    int fpsTime = 1000 / 30;
-
+    CSimpleIniA ini;
     CameraConfig cfg;
+    
+    SI_Error rc = ini.LoadFile("/etc/main_app/config.ini");
+    if (rc < 0) {
+        LOG_E << "Failed to load config";
+        return -1;
+    }
+
+    cfg.width = ini.GetLongValue("capture", "width", 1280);
+    cfg.height = ini.GetLongValue("capture", "height", 720);
+    cfg.srcFps = ini.GetLongValue("capture", "srcFps", 30);
+    std::string rtmpUrl = ini.GetValue("rtmp", "url", "");
+
     CameraCapture cameraCapture(cfg);
 
-    RTMPStreamer streamer;
-    streamer.Init("rtmp://192.168.43.4:1935/live/stream", cfg.width, cfg.height, cfg.dstFps);
-    streamer.Start();
+    SignalRegister();
+
+    RTMPStreamer liveStreamer;
+    liveStreamer.Init(rtmpUrl + "/live/stream/" + "123456", cfg.width, cfg.height, cfg.dstFps);
 
     RingQueue<StreamPacket> queue(30);
 
-    signal(SIGINT, SignalHandler);
-
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    
+    DataContext context = {
+        g_running,
+        cameraCapture,
+        liveStreamer
+    };
+    HttpServer server(context);
 
     // 创建线程
-    std::thread capThread(CaptureThread, std::ref(cameraCapture), std::ref(queue), std::ref(g_running), std::ref(streamer));
+    std::thread capThread(CaptureThread, std::ref(cameraCapture), std::ref(queue), std::ref(g_running), std::ref(liveStreamer));
     std::thread savThread(SaveThread, std::ref(queue), std::ref(g_running));
+    std::thread httpThread(HttpThread, std::ref(server), std::ref(context));
 
     while (g_running) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -111,10 +147,21 @@ int main(int argc, char **argv)
     // 回收资源
     LOG_I << "exit main_app...";
     queue.stop();
+
+    LOG_I << "exit http server";
+    server.stop();
+
+    LOG_I << "wait thread capture";
     capThread.join();
+
+    LOG_I << "wait thread save";
     savThread.join();
 
-    streamer.Stop();
+    LOG_I << "wait thread http";
+    httpThread.join();
+
+    LOG_I << "stop streamer";
+    liveStreamer.Stop();
 
     return 0;
 }

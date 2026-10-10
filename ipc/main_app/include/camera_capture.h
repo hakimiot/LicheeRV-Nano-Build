@@ -5,7 +5,12 @@
 #include "linux/cvi_comm_venc.h"
 #include "sample_comm.h"
 
-#include "image_handle.h"
+struct RawFrame {
+    uint8_t *data;      // NV12 数据（Y + UV 连续）
+    size_t   size;      // 总字节数
+    uint32_t width;     // 图像宽度
+    uint32_t height;    // 图像高度
+};
 
 // 配置结构体
 struct CameraConfig {
@@ -31,6 +36,9 @@ public:
     
     int SysViInit();
     void SysViDeinit();
+
+    // 获取参数及配置
+    CameraConfig config() const { return m_cfg; };
 
 private:
     long DiffInUs(struct timespec t1, struct timespec t2);

@@ -34,13 +34,14 @@ public:
     // 推流 H.264 码流（由 VENC 输出）
     void PushH264(const uint8_t* data, size_t len);
 
+    void SetRtmpUrl(const std::string& url);
+    void SetResolution(int width, int height);
+    void SetFps(int fps);
+
     // 状态查询
     bool IsConnected() const { return m_connected; }
     bool IsStreaming() const { return m_streaming; }
-    void SetRtmpUrl(const std::string& url);
     std::string GetRtmpUrl() const { return m_url; }
-    void SetResolution(int width, int height);
-    void SetFps(int fps);
 
 private:
     bool InitInternal();

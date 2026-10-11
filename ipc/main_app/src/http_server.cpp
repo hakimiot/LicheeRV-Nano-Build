@@ -47,7 +47,10 @@ void HttpServer::stop()
 
 void HttpServer::ServerInit()
 {
-    m_svr.Post("/api/user/login", [this](const httplib::Request& req, httplib::Response& res) { // 用户登录
+    /**
+     * 用户登录
+     */
+    m_svr.Post("/api/user/login", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 
@@ -72,7 +75,10 @@ void HttpServer::ServerInit()
         SetJson(res, resp);
     });
 
-    m_svr.Post("/api/app/config", [this](const httplib::Request& req, httplib::Response& res) {    // 摄像头
+    /**
+     * 获取APP配置
+     */
+    m_svr.Post("/api/app/config", [this](const httplib::Request& req, httplib::Response& res) {    // 
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 
@@ -96,6 +102,43 @@ void HttpServer::ServerInit()
                 }}
             }}
         };
+
+        SetJson(res, resp);
+    });
+
+    /**
+     * 获取/设置 直播推流状态
+     */
+    m_svr.Post("/api/stream/live", [this](const httplib::Request& req, httplib::Response& res) {    // 
+        nlohmann::json body = nlohmann::json::parse(req.body);
+        nlohmann::json resp;
+
+        std::string token = body["token"];
+        std::string mode = body["mode"];
+        std::string clientIp = req.remote_addr;
+
+        VRRIFY_CODE(clientIp, token, resp, res);
+
+        if (mode == "set") {
+            res.status = 200;
+            bool status = body["status"];
+            if (status == true) {
+                m_context.liveStreamer.Start();
+            } else {
+                m_context.liveStreamer.Stop();
+            }
+        } else if (mode == "get") {
+            res.status = 200;
+            resp = {
+                {"connect", m_context.liveStreamer.IsConnected()},  // 服务器连接状态
+                {"stream", m_context.liveStreamer.IsStreaming()}    // 直播推流状态
+            };
+        } else {
+            res.status = 500;
+            resp = {
+                {"error", "mode: \"" + mode + "\" is illegal"}
+            };
+        }
 
         SetJson(res, resp);
     });

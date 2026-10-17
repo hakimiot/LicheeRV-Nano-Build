@@ -124,6 +124,40 @@ void RTMPStreamer::Stop()
     LOG_I << "Streamer stopped";
 }
 
+void RTMPStreamer::ClearQueue()
+{
+    std::lock_guard<std::mutex> lock(m_queueMutex);
+    std::queue<H264Packet> empty;
+    std::swap(m_queue, empty);
+}
+
+size_t RTMPStreamer::GetQueueSize()
+{
+    std::lock_guard<std::mutex> lock(m_queueMutex);
+    return m_queue.size();
+}
+
+bool RTMPStreamer::WaitUntilQueueEmpty(int timeoutMs)
+{
+    auto start = std::chrono::steady_clock::now();
+    while (true) {
+        {
+            std::lock_guard<std::mutex> lock(m_queueMutex);
+            if (m_queue.empty()) return true;
+        }
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start).count() > timeoutMs) {
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+void RTMPStreamer::ResetPts(int64_t pts)
+{
+    m_pts = pts;
+}
+
 void RTMPStreamer::PushH264(const uint8_t* data, size_t len)
 {
     if (!m_running || len == 0) {

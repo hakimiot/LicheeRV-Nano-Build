@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-// #include "json.hpp"
+#include <nlohmann/json.hpp>
 
 #define SIZE_KB 1024
 #define SIZE_MB (1024 * SIZE_KB)
@@ -22,4 +22,5 @@ namespace FileSystem
 
     long long size(const char *filename);
 
+    bool ScanMediaJson(nlohmann::json& out, std::string& error, const std::string& date = "");
 };

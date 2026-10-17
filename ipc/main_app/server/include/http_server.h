@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include "camera_capture.h"
 #include "rtmp_streamer.h"
+#include "video_reader.h"
 
 #define VRRIFY_CODE(ip, token, resp, res) do { \
     int ret = VerifyToken(ip, token); \
@@ -21,6 +22,8 @@ struct DataContext {
     std::atomic<bool>& running;
     CameraCapture& cameraCapture;
     RTMPStreamer& liveStreamer;
+    RTMPStreamer& replayStreamer;
+    VideoReader& videoReader;
 };
 
 struct TokenInfo_t {
@@ -40,6 +43,11 @@ private:
     void ServerInit();
     void ServerLoop();
     void TimerLoop();
+
+    void ServerInitUser();      // 用户相关 API
+    void ServerInitApp();       // APP相关 API
+    void ServerInitStream();    // 推流相关 API
+    void ServerInitMedia();     // 媒体相关 API
     
     std::string GetToken(std::string ip);
     int VerifyToken(std::string ip, std::string token);

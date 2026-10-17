@@ -31,6 +31,11 @@ public:
     void Start();
     void Stop();
 
+    void ClearQueue();
+    size_t GetQueueSize();
+    bool WaitUntilQueueEmpty(int timeoutMs = 3000);
+    void ResetPts(int64_t pts = 0);
+
     // 推流 H.264 码流（由 VENC 输出）
     void PushH264(const uint8_t* data, size_t len);
 

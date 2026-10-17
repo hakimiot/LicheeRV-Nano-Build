@@ -12,7 +12,13 @@ MW_LIB = $(MW_PATH)/lib
 MW_3RD_LIB = $(MW_PATH)/lib/3rd
 
 # 头文件目录
-override CFLAGS += -Iinclude
+override CFLAGS += -Icapture/include
+override CFLAGS += -Icommon/include
+override CFLAGS += -Idevice/include
+override CFLAGS += -Ilog/include
+override CFLAGS += -Iserver/include
+override CFLAGS += -Istreamer/include
+override CFLAGS += -Ivideo/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include/ffmpeg
 override CFLAGS += -I$(STAGING_DIR)/usr/include/mqtt
@@ -41,14 +47,19 @@ override LDFLAGS += -L$(MW_PATH)/lib -L$(MW_PATH)/lib/3rd \
 
 # 所有源文件
 SRCS = main.cpp
-SRCS += src/camera_capture.cpp
-SRCS += src/device_safe.cpp
-SRCS += src/file_system.cpp
-SRCS += src/http_server.cpp
-SRCS += src/mainapp_log.cpp
-SRCS += src/random.cpp
-SRCS += src/rtmp_streamer.cpp
-SRCS += src/video_writer.cpp
+SRCS += capture/src/camera_capture.cpp
+SRCS += common/src/random.cpp
+SRCS += device/src/device_safe.cpp
+SRCS += device/src/file_system.cpp
+SRCS += log/src/mainapp_log.cpp
+SRCS += server/src/http_server_app.cpp
+SRCS += server/src/http_server_media.cpp
+SRCS += server/src/http_server_stream.cpp
+SRCS += server/src/http_server_user.cpp
+SRCS += server/src/http_server.cpp
+SRCS += streamer/src/rtmp_streamer.cpp
+SRCS += video/src/video_writer.cpp
+SRCS += video/src/video_reader.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

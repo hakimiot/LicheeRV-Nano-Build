@@ -180,7 +180,6 @@ int main(int argc, char **argv)
     replayStreamer.Init(rtmpUrl + "/replay/stream/" + "123456", cfg.width, cfg.height, cfg.dstFps);
 
     VideoReader videoReader;
-    videoReader.SetStreamer(&replayStreamer);
 
     RingQueue<StreamPacket> queue(30);
 
@@ -194,6 +193,9 @@ int main(int argc, char **argv)
         replayStreamer,
         videoReader
     };
+
+    context.videoReader.SetStreamer(&context.replayStreamer);
+
     HttpServer server(context);
 
     // 创建线程

@@ -74,7 +74,6 @@ void HttpServer::ServerInitStream()
                 m_context.videoReader.Play();
             } else if (status == "paused") {  // 暂停播放
                 m_context.videoReader.Pause();
-                m_context.replayStreamer.Stop();
             } else if (status == "stop") {  // 停止播放
                 m_context.videoReader.Stop();
                 m_context.videoReader.Close();

@@ -53,6 +53,7 @@ SRCS += device/src/device_safe.cpp
 SRCS += device/src/file_system.cpp
 SRCS += log/src/mainapp_log.cpp
 SRCS += server/src/http_server_app.cpp
+SRCS += server/src/http_server_capture.cpp
 SRCS += server/src/http_server_media.cpp
 SRCS += server/src/http_server_stream.cpp
 SRCS += server/src/http_server_user.cpp

@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
     cfg.width = ini.GetLongValue("capture", "width", 1280);
     cfg.height = ini.GetLongValue("capture", "height", 720);
-    cfg.srcFps = ini.GetLongValue("capture", "srcFps", 30);
+    cfg.srcFps = ini.GetLongValue("capture", "fps", 30);
     std::string rtmpUrl = ini.GetValue("rtmp", "url", "");
 
     // 初始化摄像头采集器

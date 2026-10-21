@@ -46,10 +46,11 @@ void HttpServer::stop()
 
 void HttpServer::ServerInit()
 {
-    ServerInitUser();
     ServerInitApp();
-    ServerInitStream();
+    ServerInitCapture();
     ServerInitMedia();
+    ServerInitStream();
+    ServerInitUser();
     
     m_svr.set_error_handler([](const httplib::Request& req, httplib::Response& res) {
         std::string path = req.path;

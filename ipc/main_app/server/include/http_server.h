@@ -44,10 +44,11 @@ private:
     void ServerLoop();
     void TimerLoop();
 
-    void ServerInitUser();      // 用户相关 API
     void ServerInitApp();       // APP相关 API
-    void ServerInitStream();    // 推流相关 API
+    void ServerInitCapture();   // 采集相关 API
     void ServerInitMedia();     // 媒体相关 API
+    void ServerInitStream();    // 推流相关 API
+    void ServerInitUser();      // 用户相关 API
     
     std::string GetToken(std::string ip);
     int VerifyToken(std::string ip, std::string token);

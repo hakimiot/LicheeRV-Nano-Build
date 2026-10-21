@@ -1,3 +1,4 @@
+#include <SimpleIni.h>
 #include "mainapp_log.h"
 #include "http_server.h"
 
@@ -106,6 +107,55 @@ void HttpServer::ServerInitStream()
             resp = {
                 {"error", "mode: \"" + mode + "\" is illegal"}
             };
+        }
+
+        SetJson(res, resp);
+    });
+
+    /**
+     * 设置 RTMP 推流基地址
+     */
+    m_svr.Post("/api/stream/seturl", [this](const httplib::Request& req, httplib::Response& res) {    // 
+        nlohmann::json body = nlohmann::json::parse(req.body);
+        nlohmann::json resp;
+
+        std::string token = body["token"];
+        std::string clientIp = req.remote_addr;
+
+        VRRIFY_CODE(clientIp, token, resp, res);
+
+        CSimpleIniA ini;
+        SI_Error rc = ini.LoadFile("/etc/main_app/config.ini");
+        if (rc < 0) {
+            res.status = 500;
+            LOG_E << "Failed to load config";
+            resp = {
+                {"error", "failed to load config, error" + rc}
+            };
+            SetJson(res, resp);
+        }
+
+        std::string url = body["url"];
+        
+        res.status = 200;
+        rc = ini.LoadFile("/etc/main_app/config.ini");
+        if (rc < 0) {
+            res.status = 500;
+            LOG_E << "failed to load config";
+            resp = {
+                {"error", "failed to load config"}
+            };
+        } else {
+            ini.SetValue("rtmp", "url", url.c_str());
+
+            rc = ini.SaveFile("/etc/main_app/config.ini");
+            if (rc < 0) {
+                res.status = 500;
+                LOG_E << "Failed to save config, error=" << rc;
+                resp = {
+                    {"error", "failed to save config, error" + rc}
+                };
+            }
         }
 
         SetJson(res, resp);

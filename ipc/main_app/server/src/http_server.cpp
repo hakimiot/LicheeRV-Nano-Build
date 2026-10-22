@@ -49,6 +49,7 @@ void HttpServer::ServerInit()
     ServerInitApp();
     ServerInitCapture();
     ServerInitMedia();
+    ServerInitNetwork();
     ServerInitStream();
     ServerInitUser();
     

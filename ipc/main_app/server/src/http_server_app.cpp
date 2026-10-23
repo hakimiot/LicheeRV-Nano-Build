@@ -5,7 +5,7 @@ void HttpServer::ServerInitApp()
     /**
      * 获取APP配置
      */
-    m_svr.Post("/api/app/config", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/app/config", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 

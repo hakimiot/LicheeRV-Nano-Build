@@ -341,6 +341,14 @@ int CameraCapture::SysViInit()
         return s32Ret;
     }
 
+    // 水印叠加
+    // std::string deviceId = "123456";
+
+    // if (!m_watermark.Init(deviceId, 0, 0)) {
+    //     LOG_E << "Watermark init failed";
+    //     return CVI_FAILURE;
+    // }
+
     // 先绑定，再启动
     s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(VpssGrp, 0, m_vencChn);
     if (s32Ret != CVI_SUCCESS) {
@@ -417,6 +425,11 @@ void CameraCapture::SysViDeinit()
 
     LOG_I << "========== CameraCapture Deinit Done ==========";
 }
+
+// bool CameraCapture::UpdateWatermark()
+// {
+//     return m_watermark.Update();
+// }
 
 long CameraCapture::DiffInUs(struct timespec t1, struct timespec t2)
 {

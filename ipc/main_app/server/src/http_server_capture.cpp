@@ -7,7 +7,7 @@ void HttpServer::ServerInitCapture()
     /**
      * 获取摄像头采集参数
      */
-    m_svr.Post("/api/capture/get", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/capture/get", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 
@@ -31,7 +31,7 @@ void HttpServer::ServerInitCapture()
     /**
      * 配置摄像头采集参数
      */
-    m_svr.Post("/api/capture/set", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/capture/set", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 

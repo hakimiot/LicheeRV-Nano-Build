@@ -24,7 +24,7 @@ void HttpServer::ServerInitNetwork()
     /**
      * 连接wifi
      */
-    m_svr.Post("/api/network/connect", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/network/connect", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 
@@ -52,7 +52,7 @@ void HttpServer::ServerInitNetwork()
     /**
      * 获取已保存的wifi列表
      */
-    m_svr.Post("/api/network/savewifi", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/network/savewifi", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 

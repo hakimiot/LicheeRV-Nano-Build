@@ -4,6 +4,7 @@
 #include "cvi_venc.h"
 #include "linux/cvi_comm_venc.h"
 #include "sample_comm.h"
+// #include "watermark_overlay.h"
 
 struct RawFrame {
     uint8_t *data;      // NV12 数据（Y + UV 连续）
@@ -37,8 +38,12 @@ public:
     int SysViInit();
     void SysViDeinit();
 
+    // bool UpdateWatermark();
+
     // 获取参数及配置
     CameraConfig config() const { return m_cfg; };
+
+    bool IsInitialized() const { return m_initStatus; }
 
 private:
     long DiffInUs(struct timespec t1, struct timespec t2);
@@ -47,6 +52,8 @@ private:
     SAMPLE_INI_CFG_S m_stIniCfg;
 
     VENC_CHN m_vencChn = 0;
+
+    // WatermarkOverlay m_watermark;
 
     bool m_initStatus;
 

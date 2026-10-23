@@ -18,6 +18,7 @@ override CFLAGS += -Ilog/include
 override CFLAGS += -Iserver/include
 override CFLAGS += -Istreamer/include
 override CFLAGS += -Ivideo/include
+# override CFLAGS += -Iwatermark/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include/ffmpeg
 override CFLAGS += -I$(STAGING_DIR)/usr/include/mqtt
@@ -49,6 +50,7 @@ SRCS = main.cpp
 SRCS += capture/src/camera_capture.cpp
 SRCS += common/src/device_safe.cpp
 SRCS += common/src/file_system.cpp
+SRCS += common/src/power_mamage.cpp
 SRCS += common/src/random.cpp
 SRCS += common/src/wlan.cpp
 SRCS += log/src/mainapp_log.cpp
@@ -57,11 +59,13 @@ SRCS += server/src/http_server_capture.cpp
 SRCS += server/src/http_server_media.cpp
 SRCS += server/src/http_server_network.cpp
 SRCS += server/src/http_server_stream.cpp
+SRCS += server/src/http_server_system.cpp
 SRCS += server/src/http_server_user.cpp
 SRCS += server/src/http_server.cpp
 SRCS += streamer/src/rtmp_streamer.cpp
 SRCS += video/src/video_writer.cpp
 SRCS += video/src/video_reader.cpp
+# SRCS += watermark/src/watermark_overlay.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

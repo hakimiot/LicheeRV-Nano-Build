@@ -115,7 +115,7 @@ void HttpServer::ServerInitStream()
     /**
      * 设置 RTMP 推流基地址
      */
-    m_svr.Post("/api/stream/seturl", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/stream/seturl", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 

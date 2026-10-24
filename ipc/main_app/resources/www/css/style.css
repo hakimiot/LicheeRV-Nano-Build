@@ -1,0 +1,540 @@
+/* =========================================================
+ *  设备配置框架 - 全局样式
+ * ========================================================= */
+
+/* ---------------- 基础重置 ---------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
+    "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f1f5f9;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+/* 页面容器默认隐藏，由 JS 控制显示 */
+.page {
+  height: 100%;
+}
+
+/* =========================================================
+ *  登录页
+ * ========================================================= */
+#page-login {
+  display: none; /* JS 显示时设为 flex */
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 24px;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  padding: 32px 28px;
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+
+.login-box h1 {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #0f172a;
+}
+
+.login-box label {
+  display: block;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 16px;
+}
+
+.login-box input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.login-box input:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.login-box button {
+  width: 100%;
+  padding: 11px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.login-box button:hover {
+  background: #2563eb;
+}
+
+.login-box button:active {
+  transform: translateY(1px);
+}
+
+.login-box button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tip {
+  min-height: 18px;
+  margin-top: 14px;
+  font-size: 13px;
+  text-align: center;
+  color: #ef4444;
+}
+
+/* =========================================================
+ *  主页布局
+ * ========================================================= */
+#page-main {
+  display: none; /* JS 显示时设为 flex */
+  flex-direction: row;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---------------- 侧栏 ---------------- */
+#sidebar {
+  width: 220px;
+  flex: 0 0 220px;
+  height: 100%;
+  background: #1e293b;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.brand {
+  flex: 0 0 auto;
+  padding: 18px 16px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#menu-root {
+  padding: 8px 0;
+  flex: 1 1 auto;
+}
+
+/* ---------------- 菜单项 ---------------- */
+.menu-item {
+  user-select: none;
+}
+
+.menu-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 14px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.menu-title:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.menu-title.active {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.menu-title.active .menu-icon {
+  filter: brightness(0) invert(1);
+}
+
+/* 图片图标 */
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* 无图标占位 */
+span.menu-icon {
+  display: inline-block;
+}
+
+.menu-title .text {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-title .arrow {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: inherit;
+  opacity: 0.7;
+  transition: transform 0.18s ease;
+}
+
+.menu-item.open > .menu-title .arrow {
+  transform: rotate(90deg);
+}
+
+/* 子菜单默认隐藏，展开时显示 */
+.menu-sub {
+  display: none;
+  background: #172033;
+}
+
+.menu-sub .menu-title {
+  padding-left: 42px;
+  font-size: 13px;
+}
+
+.menu-sub .menu-sub .menu-title {
+  padding-left: 60px;
+}
+
+/* =========================================================
+ *  右侧组件区
+ * ========================================================= */
+#content {
+  flex: 1 1 auto;
+  height: 100%;
+  padding: 24px 28px;
+  overflow-y: auto;
+  background: #f1f5f9;
+}
+
+#content::-webkit-scrollbar {
+  width: 8px;
+}
+
+#content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* 组件标题 */
+#content h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+/* =========================================================
+ *  组件内通用元素
+ * ========================================================= */
+
+/* 卡片 */
+.card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-top: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.card + .card {
+  margin-top: 16px;
+}
+
+.card p {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.9;
+}
+
+.card p b {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* 表单 */
+.card label {
+  display: block;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 14px;
+}
+
+.card label:last-of-type {
+  margin-bottom: 6px;
+}
+
+.card input,
+.card select,
+.card textarea {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.card input:focus,
+.card select:focus,
+.card textarea:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* 按钮 */
+.card .actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card button {
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #e2e8f0;
+  color: #1e293b;
+  transition: filter 0.15s, transform 0.05s;
+}
+
+.card button:hover {
+  filter: brightness(0.96);
+}
+
+.card button:active {
+  transform: translateY(1px);
+}
+
+.card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card button.primary {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.card button.primary:hover {
+  filter: brightness(1.08);
+}
+
+.card button.danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.card button.danger:hover {
+  filter: brightness(1.08);
+}
+
+/* =========================================================
+ *  加载中
+ * ========================================================= */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.loading::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+ *  错误组件
+ * ========================================================= */
+.card.error {
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+}
+
+.card.error h2 {
+  font-size: 16px;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.card.error p {
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* =========================================================
+ *  响应式：小屏侧栏收窄
+ * ========================================================= */
+@media (max-width: 768px) {
+  #sidebar {
+    width: 180px;
+    flex-basis: 180px;
+  }
+
+  .brand {
+    font-size: 15px;
+    padding: 14px 12px;
+  }
+
+  .menu-title {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .menu-sub .menu-title {
+    padding-left: 32px;
+  }
+
+  #content {
+    padding: 16px 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  #sidebar {
+    width: 60px;
+    flex-basis: 60px;
+  }
+
+  .brand {
+    font-size: 0;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  .brand::before {
+    content: "⚡";
+    font-size: 18px;
+  }
+
+  .menu-title {
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  .menu-title .text,
+  .menu-title .arrow {
+    display: none;
+  }
+
+  .menu-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .menu-sub .menu-title {
+    padding-left: 0;
+  }
+
+  #content {
+    padding: 14px;
+  }
+}
+
+.card.error .err-line {
+  font-size: 13px;
+  color: #b91c1c;
+  line-height: 1.8;
+  word-break: break-all;
+}
+
+.card.error .err-json {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #7f1d1d;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 320px;
+  overflow: auto;
+}

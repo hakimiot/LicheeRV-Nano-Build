@@ -9,8 +9,8 @@
 #define VRRIFY_CODE(ip, token, resp, res) do { \
     int ret = VerifyToken(ip, token); \
     if (ret < 0) { \
-        res.status = 500; \
         resp = { \
+            {"code", 500}, \
             {"error", "token verift failed"} \
         }; \
         SetJson(res, resp); \
@@ -55,7 +55,7 @@ private:
     std::string GetToken(std::string ip);
     int VerifyToken(std::string ip, std::string token);
 
-    void SetJson(httplib::Response& res, const nlohmann::json& j, int code = 200);
+    void SetJson(httplib::Response& res, const nlohmann::json& j);
 
     httplib::Server m_svr;
     std::thread m_serverThread;

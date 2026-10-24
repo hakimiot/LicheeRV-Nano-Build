@@ -3,9 +3,6 @@
 
 void HttpServer::ServerInitSystem()
 {
-    /**
-     * 重启设备
-     */
     m_svr.Post("/api/system/reset", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -15,6 +12,10 @@ void HttpServer::ServerInitSystem()
 
         VRRIFY_CODE(clientIp, token, resp, res);
 
+        resp = {{"code", 200}, {"msg", "rebooting"}};
+        SetJson(res, resp);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         Power::reset();
     });
 }

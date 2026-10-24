@@ -4,9 +4,6 @@
 
 void HttpServer::ServerInitStream()
 {
-    /**
-     * 获取/设置 直播推流状态
-     */
     m_svr.Post("/api/stream/live", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -18,22 +15,19 @@ void HttpServer::ServerInitStream()
         VRRIFY_CODE(clientIp, token, resp, res);
 
         if (mode == "set") {
-            res.status = 200;
             bool status = body["status"];
-            if (status == true) {
-                m_context.liveStreamer.Start();
-            } else {
-                m_context.liveStreamer.Stop();
-            }
+            if (status) m_context.liveStreamer.Start();
+            else m_context.liveStreamer.Stop();
+            resp = {{"code", 200}, {"msg", "success"}};
         } else if (mode == "get") {
-            res.status = 200;
             resp = {
-                {"connect", m_context.liveStreamer.IsConnected()},  // 服务器连接状态
-                {"stream", m_context.liveStreamer.IsStreaming()}    // 直播推流状态
+                {"code", 200},
+                {"connect", m_context.liveStreamer.IsConnected()},
+                {"stream", m_context.liveStreamer.IsStreaming()}
             };
         } else {
-            res.status = 500;
             resp = {
+                {"code", 500},
                 {"error", "mode: \"" + mode + "\" is illegal"}
             };
         }
@@ -41,9 +35,6 @@ void HttpServer::ServerInitStream()
         SetJson(res, resp);
     });
     
-    /**
-     * 获取/设置 回放推流状态
-     */
     m_svr.Post("/api/stream/replay", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -55,66 +46,54 @@ void HttpServer::ServerInitStream()
         VRRIFY_CODE(clientIp, token, resp, res);
 
         if (mode == "set") {
-            res.status = 200;
             std::string status = body["status"];
-            if (status == "media") {    // 设置播放文件
+            if (status == "media") {
                 std::string file = body["file"];
                 if (!m_context.videoReader.Open(file)) {
-                    LOG_E << "VideoReader open failed: " << file;
-                    res.status = 500;
-                    resp = {
-                        {"error", "open: \"" + file + "\" failed"}
-                    };
+                    resp = {{"code", 500}, {"error", "open: \"" + file + "\" failed"}};
                 } else {
-                    resp = {
-                        {"url", m_context.replayStreamer.GetRtmpUrl()}
-                    };
+                    resp = {{"code", 200}, {"url", m_context.replayStreamer.GetRtmpUrl()}};
                 }
-            } else if (status == "start") {    // 开始播放
+            } else if (status == "start") {
                 m_context.replayStreamer.Start();
                 m_context.videoReader.Play();
-            } else if (status == "paused") {  // 暂停播放
+                resp = {{"code", 200}, {"msg", "success"}};
+            } else if (status == "paused") {
                 m_context.videoReader.Pause();
-            } else if (status == "stop") {  // 停止播放
+                resp = {{"code", 200}, {"msg", "success"}};
+            } else if (status == "stop") {
                 m_context.videoReader.Stop();
                 m_context.videoReader.Close();
                 m_context.replayStreamer.Stop();
-            } else if (status == "seek") {  // 设置进度
-                int64_t targetTimeMs = body["seek"];
-                if (!m_context.videoReader.Seek(targetTimeMs)) {
-                    res.status = 500;
-                    resp = {
-                        {"error", "seel failed"}
-                    };
+                resp = {{"code", 200}, {"msg", "success"}};
+            } else if (status == "seek") {
+                if (!body.contains("seek") || !body["seek"].is_number()) {
+                    resp = {{"code", 400}, {"error", "missing seek value"}};
+                } else {
+                    int64_t targetTimeMs = body["seek"].get<int64_t>();
+                    if (!m_context.videoReader.Seek(targetTimeMs)) {
+                        resp = {{"code", 500}, {"error", "seek failed or timeout"}};
+                    } else {
+                        resp = {{"code", 200}, {"seek", targetTimeMs}};
+                    }
                 }
-            } else {  // 错误的指令
-                res.status = 500;
-                resp = {
-                    {"error", "status: \"" + status + "\" is illegal"}
-                };
+            } else {
+                resp = {{"code", 500}, {"error", "status: \"" + status + "\" is illegal"}};
             }
         } else if (mode == "get") {
-            res.status = 200;
             resp = {
-                {"connect", m_context.replayStreamer.IsConnected()},  // 服务器连接状态
-                {"stream", m_context.replayStreamer.IsStreaming()},   // 直播推流状态
-                {"reader", {
-                    {"state", m_context.videoReader.GetStateString()}   // 视频读取器状态
-                }}
+                {"code", 200},
+                {"connect", m_context.replayStreamer.IsConnected()},
+                {"stream", m_context.replayStreamer.IsStreaming()},
+                {"reader", {{"state", m_context.videoReader.GetStateString()}}}
             };
         } else {
-            res.status = 500;
-            resp = {
-                {"error", "mode: \"" + mode + "\" is illegal"}
-            };
+            resp = {{"code", 500}, {"error", "mode: \"" + mode + "\" is illegal"}};
         }
 
         SetJson(res, resp);
     });
 
-    /**
-     * 设置 RTMP 推流基地址
-     */
     m_svr.Post("/api/stream/seturl", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -127,35 +106,19 @@ void HttpServer::ServerInitStream()
         CSimpleIniA ini;
         SI_Error rc = ini.LoadFile("/etc/main_app/config.ini");
         if (rc < 0) {
-            res.status = 500;
-            LOG_E << "Failed to load config";
-            resp = {
-                {"error", "failed to load config, error" + rc}
-            };
+            resp = {{"code", 500}, {"error", "failed to load config"}};
             SetJson(res, resp);
+            return;
         }
 
         std::string url = body["url"];
-        
-        res.status = 200;
-        rc = ini.LoadFile("/etc/main_app/config.ini");
-        if (rc < 0) {
-            res.status = 500;
-            LOG_E << "failed to load config";
-            resp = {
-                {"error", "failed to load config"}
-            };
-        } else {
-            ini.SetValue("rtmp", "url", url.c_str());
+        ini.SetValue("rtmp", "url", url.c_str());
 
-            rc = ini.SaveFile("/etc/main_app/config.ini");
-            if (rc < 0) {
-                res.status = 500;
-                LOG_E << "Failed to save config, error=" << rc;
-                resp = {
-                    {"error", "failed to save config, error" + rc}
-                };
-            }
+        rc = ini.SaveFile("/etc/main_app/config.ini");
+        if (rc < 0) {
+            resp = {{"code", 500}, {"error", "failed to save config"}};
+        } else {
+            resp = {{"code", 200}, {"msg", "success"}};
         }
 
         SetJson(res, resp);

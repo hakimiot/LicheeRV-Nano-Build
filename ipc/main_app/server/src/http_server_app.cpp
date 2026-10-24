@@ -1,10 +1,8 @@
+#include "mainapp_log.h"
 #include "http_server.h"
 
 void HttpServer::ServerInitApp()
 {
-    /**
-     * 获取APP配置
-     */
     m_svr.Post("/api/app/config", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -14,25 +12,48 @@ void HttpServer::ServerInitApp()
 
         VRRIFY_CODE(clientIp, token, resp, res);
 
-        res.status = 200;
         resp = {
+            {"code", 200},
             {"capture", {
-                {"width", m_context.cameraCapture.config().width},      // 图像宽
-                {"height", m_context.cameraCapture.config().height},    // 图像高
-                {"fps", m_context.cameraCapture.config().srcFps}        // 帧率
+                {"width", m_context.cameraCapture.config().width},
+                {"height", m_context.cameraCapture.config().height},
+                {"fps", m_context.cameraCapture.config().srcFps}
             }},
             {"rtmp", {
                 {"live", {
-                    {"url", m_context.liveStreamer.GetRtmpUrl()},       // 直播推流地址
-                    {"connect", m_context.liveStreamer.IsConnected()},  // 服务器连接状态
-                    {"stream", m_context.liveStreamer.IsStreaming()}    // 直播推流状态
+                    {"url", m_context.liveStreamer.GetRtmpUrl()},
+                    {"connect", m_context.liveStreamer.IsConnected()},
+                    {"stream", m_context.liveStreamer.IsStreaming()}
                 }},
                 {"replay", {
-                    {"url", m_context.replayStreamer.GetRtmpUrl()},       // 回放推流地址
-                    {"connect", m_context.replayStreamer.IsConnected()},  // 服务器连接状态
-                    {"stream", m_context.replayStreamer.IsStreaming()}    // 回放推流状态
+                    {"url", m_context.replayStreamer.GetRtmpUrl()},
+                    {"connect", m_context.replayStreamer.IsConnected()},
+                    {"stream", m_context.replayStreamer.IsStreaming()}
                 }}
+            }},
+            {"info", {
+                {"device", "LicheeRV-Nano"},
+                {"version", "1.0.0"},
+                {"uptime", 3600}
             }}
+        };
+
+        SetJson(res, resp);
+    });
+
+    m_svr.Post("/api/settings/info", [this](const httplib::Request& req, httplib::Response& res) {
+        nlohmann::json body = nlohmann::json::parse(req.body);
+        nlohmann::json resp;
+
+        std::string token = body["token"];
+        std::string clientIp = req.remote_addr;
+
+        VRRIFY_CODE(clientIp, token, resp, res);
+
+        resp = {
+            {"code", 200},
+            {"name", "device-01"},
+            {"interval", 1000}
         };
 
         SetJson(res, resp);

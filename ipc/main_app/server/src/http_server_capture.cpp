@@ -4,10 +4,7 @@
 
 void HttpServer::ServerInitCapture()
 {
-    /**
-     * 获取摄像头采集参数
-     */
-    m_svr.Post("/api/capture/get", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/capture/get", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 
@@ -16,22 +13,19 @@ void HttpServer::ServerInitCapture()
 
         VRRIFY_CODE(clientIp, token, resp, res);
 
-        res.status = 200;
         resp = {
+            {"code", 200},
             {"capture", {
-                {"width", m_context.cameraCapture.config().width},      // 图像宽
-                {"height", m_context.cameraCapture.config().height},    // 图像高
-                {"fps", m_context.cameraCapture.config().srcFps}        // 帧率
+                {"width", m_context.cameraCapture.config().width},
+                {"height", m_context.cameraCapture.config().height},
+                {"fps", m_context.cameraCapture.config().srcFps}
             }}
         };
 
         SetJson(res, resp);
     });
     
-    /**
-     * 配置摄像头采集参数
-     */
-    m_svr.Post("/api/capture/set", [this](const httplib::Request& req, httplib::Response& res) {    // 
+    m_svr.Post("/api/capture/set", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
 
@@ -43,49 +37,35 @@ void HttpServer::ServerInitCapture()
         CSimpleIniA ini;
         SI_Error rc = ini.LoadFile("/etc/main_app/config.ini");
         if (rc < 0) {
-            res.status = 500;
-            LOG_E << "Failed to load config";
             resp = {
-                {"error", "failed to load config, error" + rc}
+                {"code", 500},
+                {"error", "failed to load config"}
             };
             SetJson(res, resp);
+            return;
         }
 
         CameraConfig cfg = m_context.cameraCapture.config();
         
-        if (body.contains("width")) {
-            cfg.width = body["width"];
-        }
+        if (body.contains("width"))  cfg.width  = body["width"];
+        if (body.contains("height")) cfg.height = body["height"];
+        if (body.contains("fps"))    cfg.srcFps = body["fps"];
 
-        if (body.contains("height")) {
-            cfg.height = body["height"];
-        }
+        ini.SetLongValue("capture", "width", cfg.width);
+        ini.SetLongValue("capture", "height", cfg.height);
+        ini.SetLongValue("capture", "fps", cfg.srcFps);
 
-        if (body.contains("fps")) {
-            cfg.srcFps = body["fps"];
-        }
-
-        res.status = 200;
-        rc = ini.LoadFile("/etc/main_app/config.ini");
+        rc = ini.SaveFile("/etc/main_app/config.ini");
         if (rc < 0) {
-            res.status = 500;
-            LOG_E << "failed to load config";
             resp = {
-                {"error", "failed to load config"}
+                {"code", 500},
+                {"error", "failed to save config"}
             };
         } else {
-            ini.SetLongValue("capture", "width", cfg.width);
-            ini.SetLongValue("capture", "height", cfg.height);
-            ini.SetLongValue("capture", "fps", cfg.srcFps);
-
-            rc = ini.SaveFile("/etc/main_app/config.ini");
-            if (rc < 0) {
-                res.status = 500;
-                LOG_E << "Failed to save config, error=" << rc;
-                resp = {
-                    {"error", "failed to save config, error" + rc}
-                };
-            }
+            resp = {
+                {"code", 200},
+                {"msg", "success"}
+            };
         }
 
         SetJson(res, resp);

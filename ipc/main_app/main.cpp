@@ -146,6 +146,22 @@ static void HttpThread(HttpServer& server, DataContext& context)
     server.start();
 }
 
+/** 
+ * 水印同步线程
+*/
+// static void WatermarkThread(CameraCapture &cameraCapture, std::atomic<bool> &running)
+// {
+//     while (running.load()) {
+//         cameraCapture.UpdateWatermark();
+
+//         // 每秒刷新一次
+//         for (int i = 0; i < 10 && running.load(); ++i) {
+//             std::this_thread::sleep_for(
+//                 std::chrono::milliseconds(100));
+//         }
+//     }
+// }
+
 /**
  * 主函数
  */
@@ -168,6 +184,10 @@ int main(int argc, char **argv)
 
     // 初始化摄像头采集器
     CameraCapture cameraCapture(cfg);
+    if (!cameraCapture.IsInitialized()) {
+        LOG_E << "Camera initialization failed, abort startup";
+        return -1;
+    }
 
     SignalRegister();
 
@@ -202,6 +222,7 @@ int main(int argc, char **argv)
     std::thread capThread(CaptureThread, std::ref(cameraCapture), std::ref(queue), std::ref(g_running), std::ref(liveStreamer));
     std::thread savThread(SaveThread, std::ref(queue), std::ref(g_running), std::ref(cfg));
     std::thread httpThread(HttpThread, std::ref(server), std::ref(context));
+    // std::thread watermarkThread(WatermarkThread, std::ref(cameraCapture), std::ref(g_running));
 
     while (g_running) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -213,6 +234,9 @@ int main(int argc, char **argv)
 
     LOG_I << "exit http server";
     server.stop();
+
+    // LOG_I << "stop watermark thread";
+    // watermarkThread.join();
 
     LOG_I << "wait thread capture";
     capThread.join();

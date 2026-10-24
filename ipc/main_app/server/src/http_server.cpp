@@ -51,11 +51,14 @@ void HttpServer::ServerInit()
     ServerInitMedia();
     ServerInitNetwork();
     ServerInitStream();
+    ServerInitSystem();
     ServerInitUser();
+
+    m_svr.set_mount_point("/", "/www");
     
     m_svr.set_error_handler([](const httplib::Request& req, httplib::Response& res) {
         std::string path = req.path;
-    
+        LOG_I << "req.body = " << req.body;
         res.status = 404;
         res.set_content(R"({"error": "API endpoint not found", "path": ")" + path + R"("})",  "application/json");
     });
@@ -106,9 +109,9 @@ int HttpServer::VerifyToken(std::string ip, std::string token)
     return -1;
 }
 
-void HttpServer::SetJson(httplib::Response& res, const nlohmann::json& j, int code)
+void HttpServer::SetJson(httplib::Response& res, const nlohmann::json& j)
 {
-    res.status = code;
+    res.status = 200;
     res.set_header("Content-Type", "application/json; charset=utf-8");
     res.set_content(j.dump(), "application/json");
 }

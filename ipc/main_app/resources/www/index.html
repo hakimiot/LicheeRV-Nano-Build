@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设备配置</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ 登录页 ============ -->
+  <div id="page-login" class="page">
+    <form id="login-form" class="login-box">
+      <h1>设备登录</h1>
+      <label>用户名
+        <input id="login-user" type="text" autocomplete="username" required>
+      </label>
+      <label>密码
+        <input id="login-pass" type="password" autocomplete="current-password" required>
+      </label>
+      <button id="login-btn" type="submit">登 录</button>
+      <p id="login-tip" class="tip"></p>
+    </form>
+  </div>
+
+  <!-- ============ 主页 ============ -->
+  <div id="page-main" class="page">
+    <aside id="sidebar">
+      <div class="brand">⚡ 设备配置</div>
+      <nav id="menu-root"></nav>
+    </aside>
+    <main id="content"></main>
+  </div>
+
+  <!-- 加载顺序：api → loader → config → menu → auth → main -->
+  <script src="js/api.js"></script>
+  <script src="js/loader.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

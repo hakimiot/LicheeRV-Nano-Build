@@ -3,9 +3,6 @@
 
 void HttpServer::ServerInitUser()
 {
-    /**
-     * 用户登录
-     */
     m_svr.Post("/api/user/login", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -15,15 +12,15 @@ void HttpServer::ServerInitUser()
         std::string clientIp = req.remote_addr;
 
         bool ret = DeviceSafe::Authenticate(username, password);
-        if (ret == true) {
-            res.status = 200;
+        if (ret) {
             resp = {
+                {"code", 200},
                 {"token", GetToken(clientIp)},
                 {"ip", clientIp}
             };
         } else {
-            res.status = 500;
             resp = {
+                {"code", 401},
                 {"error", "Incorrect username or password"}
             };
         }

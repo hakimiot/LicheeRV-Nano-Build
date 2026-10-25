@@ -11,7 +11,6 @@ MAIN_APP_SITE_METHOD = local
 
 MW_PATH = $(BR2_EXTERNAL)/../middleware/v2
 
-
 MAIN_APP_DEPENDENCIES += linux-pam
 MAIN_APP_DEPENDENCIES += ffmpeg
 MAIN_APP_DEPENDENCIES += paho-mqtt-cpp
@@ -29,7 +28,7 @@ endef
 
 define MAIN_APP_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/main_app $(TARGET_DIR)/usr/bin/main_app
-	cp -a $(@D)/resources $(TARGET_DIR)/
+	cp -a $(@D)/resources/* $(TARGET_DIR)/
 
 	for lib in $(MW_PATH)/lib/*.so*; do \
 		$(INSTALL) -D -m 0755 $$lib $(TARGET_DIR)/usr/lib/; \

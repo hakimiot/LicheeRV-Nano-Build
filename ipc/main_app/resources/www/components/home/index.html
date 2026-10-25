@@ -1,8 +1,59 @@
+<link rel="stylesheet" href="css/card.css">
+<style>
+  .card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 14px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+</style>
+
 <div class="cmp-home">
-  <h2>主页</h2>
-  <div class="card">
-    <p><b>设备型号：</b><span id="home-device">-</span></p>
-    <p><b>固件版本：</b><span id="home-version">-</span></p>
-    <p><b>运行时长：</b><span id="home-uptime">-</span></p>
+  <h2 class="card-title">主页</h2>
+
+  <div class="card-grid"> 
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/device.svg" alt="" style="width:18px; height:18px;">
+        <span>设备信息</span>
+      </h3>
+      <p><b>设备型号：</b><span id="home-device-model">-</span></p>
+      <p><b>固件版本：</b><span id="home-device-version">-</span></p>
+      <p><b>运行时长：</b><span id="home-device-uptime">-</span></p>
+    </div>
+
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/video.svg" alt="" style="width:24px; height:24px;">
+        <span>图像采集</span>
+      </h3>
+      <p><b>图像宽度：</b><span id="home-capture-width">-</span></p>
+      <p><b>图像高度：</b><span id="home-capture-height">-</span></p>
+      <p><b>视频帧率：</b><span id="home-capture-fps">-</span></p>
+    </div>
+  </div>
+
+  <div class="card-grid"> 
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/live.svg" alt="" style="width:24px; height:24px;">
+        <span>直播推流</span>
+      </h3>
+      <p><b>连接状态：</b><span id="home-live-connect">-</span></p>
+      <p><b>推流状态：</b><span id="home-live-status">-</span></p>
+      <p><b>推流地址：</b><span id="home-live-url">-</span></p>
+    </div>
+
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/replay.svg" alt="" style="width:18px; height:18px;">
+        <span>回放推流</span>
+      </h3>
+      <p><b>连接状态：</b><span id="home-replay-connect">-</span></p>
+      <p><b>推流状态：</b><span id="home-replay-status">-</span></p>
+      <p><b>推流地址：</b><span id="home-replay-url">-</span></p>
+    </div>
   </div>
 </div>

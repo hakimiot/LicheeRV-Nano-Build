@@ -1,0 +1,53 @@
+/* =========================================================
+ *  子卡片网格：一行多个，按屏幕宽度自动换行减少
+ * ========================================================= */
+.card-grid {
+  display: grid;
+  gap: 14px;
+  /* 每个子卡片最小 220px，一行尽量多放；屏窄时自动降为 1~2 个 */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 14px;
+}
+
+/* 子卡片本身 */
+.card-grid .sub-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+  min-width: 0;           /* 防止内容撑破网格 */
+}
+
+.card-grid .sub-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.card-grid .sub-card p {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.card-grid .sub-card p b {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* 想让某张子卡片跨两列，加这个类 */
+.card-grid .sub-card.span-2 {
+  grid-column: span 2;
+}
+
+/* 小屏时跨列取消，避免溢出 */
+@media (max-width: 600px) {
+  .card-grid .sub-card.span-2 {
+    grid-column: auto;
+  }
+}

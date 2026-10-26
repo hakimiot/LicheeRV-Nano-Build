@@ -9,6 +9,21 @@ const MENU_CONFIG = [
     children: []
   },
   {
+    id: 'network',
+    title: '网络',
+    icon: 'icons/menu/network.svg',
+    children: [
+      {
+        id: 'wlan',
+        title: 'WLAN',
+        icon: 'icons/menu/wlan.svg',
+        component: 'Wlan',
+        dir: 'wlan',
+        api: '/api/network/wifilist'
+      }
+    ]
+  },
+  {
     id: 'system',
     title: '系统',
     icon: 'icons/menu/system.svg',

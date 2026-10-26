@@ -162,63 +162,94 @@ nlohmann::json Wlan::ScabWifiJson(const std::string& iface)
     return out;
 }
 
-bool Wlan::ConnectWifi(const std::string& ssid, const std::string& pswd, std::string& error, const std::string& iface)
+bool Wlan::ConnectWifi(const std::string& ssid, const std::string& pswd,
+                       std::string& error, const std::string& iface)
 {
-    // 确保网卡已启动
+    error.clear();
+
+    // 1. 确保网卡启动
     std::string upCmd = "ip link set " + iface + " up";
     system(upCmd.c_str());
 
-    // 生成临时配置
+    // 2. 生成新 network 块
     std::string tmpConf = "/tmp/wpa_new.conf";
-    std::string genCmd = "wpa_passphrase \"" + ssid + "\" \"" + pswd + "\" > " + tmpConf;
-    if (system(genCmd.c_str()) != 0) {
-        std::cerr << "Failed to generate wpa config" << std::endl;
-        error = "Failed to generate wpa config";
-        return false;
+    std::string genCmd;
+
+    if (pswd.empty()) {
+        // 开放网络：手动生成 key_mgmt=NONE 块
+        std::ofstream ofs(tmpConf, std::ios::trunc);
+        if (!ofs.is_open()) {
+            error = "Failed to create temp config";
+            return false;
+        }
+        ofs << "network={\n";
+        ofs << "    ssid=\"" << ssid << "\"\n";
+        ofs << "    key_mgmt=NONE\n";
+        ofs << "}\n";
+        ofs.close();
+    } else {
+        // 加密网络：用 wpa_passphrase 生成 WPA-PSK 块
+        genCmd = "wpa_passphrase \"" + ssid + "\" \"" + pswd + "\" > " + tmpConf;
+        if (system(genCmd.c_str()) != 0) {
+            error = "Failed to generate wpa config";
+            return false;
+        }
+        std::ifstream ifs(tmpConf);
+        if (!ifs.is_open() || ifs.peek() == std::ifstream::traits_type::eof()) {
+            error = "Generated wpa config is empty";
+            return false;
+        }
+        ifs.close();
     }
 
-    // 读取临时文件内容
+    // 3. 读取新 network 块内容
     std::ifstream ifs(tmpConf);
     if (!ifs.is_open()) {
         error = "Failed to read wpa config";
         return false;
     }
-    std::string netBlock((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    std::string netBlock((std::istreambuf_iterator<char>(ifs)),
+                          std::istreambuf_iterator<char>());
     ifs.close();
-
-    // 确保主配置有 ctrl_interface，并追加新网络
-    std::string confPath = "/etc/wpa_supplicant.conf";
-    system(("grep -q 'ctrl_interface' " + confPath + " || echo 'ctrl_interface=/var/run/wpa_supplicant' >> " + confPath).c_str());
-    
-    // 将新网络块追加到主配置
-    std::string appendCmd = "cat " + tmpConf + " >> " + confPath;
-    system(appendCmd.c_str());
     system(("rm -f " + tmpConf).c_str());
 
-    // 彻底重启 wpa_supplicant（先杀后等再起）
-    system("killall wpa_supplicant");
-    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 等待 500ms，让内核释放网卡资源
+    // 4. 直接覆盖主配置，只保留新 network 块
+    std::string confPath = "/etc/wpa_supplicant.conf";
+    {
+        std::ofstream ofs(confPath, std::ios::trunc);
+        if (!ofs.is_open()) {
+            error = "Failed to write main config";
+            return false;
+        }
+        ofs << netBlock;
+        ofs.close();
+    }
 
+    // 5. 清理残留进程和 socket
+    system("killall wpa_supplicant 2>/dev/null");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    system(("rm -f /var/run/wpa_supplicant/" + iface).c_str());
+
+    // 6. 启动 wpa_supplicant
     std::string startCmd = "wpa_supplicant -B -i " + iface + " -c " + confPath;
     if (system(startCmd.c_str()) != 0) {
-        std::cerr << "Failed to start wpa_supplicant" << std::endl;
         error = "Failed to start wpa_supplicant";
         return false;
     }
 
-    // 异步等待连接（最多等 10 秒）
+    // 7. 用 iw 等待连接完成（最多 10 秒）
     for (int i = 0; i < 20; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 500ms
-        std::string checkCmd = "wpa_cli -i " + iface + " status 2>/dev/null | grep -q 'wpa_state=COMPLETED'";
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        std::string checkCmd =
+            "iw dev " + iface + " link 2>/dev/null | grep -q 'Connected to'";
         if (system(checkCmd.c_str()) == 0) {
-            // 7. 获取 IP 地址
             std::string dhcpCmd = "udhcpc -i " + iface + " -b >/dev/null 2>&1";
             system(dhcpCmd.c_str());
             return true;
         }
     }
 
-    std::cerr << "Connect timeout" << std::endl;
     error = "Connect timeout";
     return false;
 }

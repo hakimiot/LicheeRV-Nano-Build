@@ -6,6 +6,7 @@ window.Wlan_mount = function (root, data) {
     return;
   }
 
+  // 从 MENU_CONFIG 取扫描接口，避免和 config.js 不一致
   const menuItem = (typeof MENU_CONFIG !== 'undefined')
     ? MENU_CONFIG.find(m => m.dir === 'wlan' || m.component === 'Wlan')
     : null;
@@ -13,6 +14,7 @@ window.Wlan_mount = function (root, data) {
 
   renderList(listEl, data);
 
+  // 刷新按钮
   if (refreshEl) {
     refreshEl.addEventListener('click', async () => {
       if (refreshEl.disabled) return;
@@ -55,7 +57,9 @@ function renderList(listEl, data) {
 
     const btn = connect
       ? `<button class="wlan-btn connected" disabled>已连接</button>`
-      : `<button class="wlan-btn connect" data-ssid="${ssid}">连接</button>`;
+      : `<button class="wlan-btn connect"
+                 data-ssid="${ssid}"
+                 data-open="${open ? '1' : '0'}">连接</button>`;
 
     return `
       <div class="wlan-item${connect ? ' is-connected' : ''}">
@@ -69,29 +73,56 @@ function renderList(listEl, data) {
 
   // 绑定连接按钮
   listEl.querySelectorAll('.wlan-btn.connect').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const ssid = btn.dataset.ssid;
-      btn.disabled = true;
-      btn.textContent = '连接中…';
-      try {
-        const r = await apiPost('/api/wlan/connect', { ssid });
-        if (r && r.code === 200) {
-          btn.textContent = '已连接';
-          btn.classList.remove('connect');
-          btn.classList.add('connected');
-          btn.closest('.wlan-item').classList.add('is-connected');
-        } else {
-          btn.textContent = '连接';
-          btn.disabled = false;
-          alert('连接失败：' + (r && r.error ? r.error : '未知错误'));
-        }
-      } catch (e) {
-        btn.textContent = '连接';
-        btn.disabled = false;
-        alert('连接失败：' + e.message);
-      }
+      const open = btn.dataset.open === '1';
+      handleConnect(listEl, btn, ssid, open);
     });
   });
+}
+
+/* ---------------- 连接处理 ---------------- */
+async function handleConnect(listEl, btn, ssid, isOpen) {
+  // 开放网络：pswd 传空串直接连；加密网络：弹窗输密码
+  let pswd = '';
+  if (!isOpen) {
+    const input = prompt(`请输入 WiFi「${ssid}」的密码：`, '');
+    if (input === null) return;          // 用户取消
+    pswd = input.trim();
+    if (!pswd) {
+      alert('密码不能为空');
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = '连接中…';
+
+  try {
+    const r = await apiPost('/api/network/connect', { ssid, pswd });
+    if (r && r.code === 200) {
+      btn.textContent = '已连接';
+      btn.classList.remove('connect');
+      btn.classList.add('connected');
+      btn.disabled = true;
+      const row = btn.closest('.wlan-item');
+      if (row) row.classList.add('is-connected');
+
+      // 其他行按钮恢复（只允许一个连接）
+      listEl.querySelectorAll('.wlan-btn.connect').forEach(b => {
+        if (b !== btn) { b.disabled = false; }
+      });
+    } else {
+      btn.textContent = oldText;
+      btn.disabled = false;
+      alert('连接失败：' + (r && r.error ? r.error : '未知错误'));
+    }
+  } catch (e) {
+    btn.textContent = oldText;
+    btn.disabled = false;
+    alert('连接失败：' + e.message);
+  }
 }
 
 /* ---------------- 图标映射 ---------------- */

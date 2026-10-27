@@ -16,8 +16,17 @@ fi
 output_dir=$1
 echo ${output_dir}
 set -eu
-git_id=$(git rev-parse HEAD | head -c 6)
-image=$(LC_ALL=C date +%F-%R | sed -e 's/:/-/g' | tr -d '( ):')-${git_id}.img
+
+THISDIR=$(dirname $(realpath $0))
+if [ -f "${THISDIR}/version" ]; then
+    . "${THISDIR}/version"
+else
+    NAME="LicheeRV-Nano"
+    VERSION="unknown"
+fi
+
+image="${NAME}-${VERSION}.img"
+
 THISDIR=$(dirname $(realpath $0))
 mkdir -pv ${output_dir}/tmp/
 mkdir -pv ${output_dir}/root/
@@ -37,6 +46,7 @@ cp -fv ${THISDIR}/genimage_rootless.cfg ${output_dir}/genimage.cfg
 cp -fv ${THISDIR}/logo.jpeg ${output_dir}/input/logo.jpeg
 cp -fv ${THISDIR}/ncm.ipv4_prefix ${output_dir}/input/ncm.ipv4_prefix
 cp -fv ${THISDIR}/hostname ${output_dir}/input/hostname
+cp -fv ${THISDIR}/version ${output_dir}/input/version
 sed -i -e "s/duo.img/${image}/g" ${output_dir}/genimage.cfg
 cd ${output_dir}/
 ${THISDIR}/genimage
@@ -48,8 +58,13 @@ echo "--------------->8------------------"
 echo "# please use win32diskimager or dd command write it into sdcard"
 echo ""
 echo ""
-realpath ${output_dir}/images/${image}
+IMG_PATH=$(realpath ${output_dir}/images/${image})
+echo "Compressing image to ${IMG_PATH}.gz ..."
+gzip -9 -f "${IMG_PATH}"
 echo ""
+echo "# Your compressed image is ready:"
+echo "${IMG_PATH}.gz"
+md5sum "${IMG_PATH}.gz"
 echo ""
 echo "--------------->8------------------"
 exit $?

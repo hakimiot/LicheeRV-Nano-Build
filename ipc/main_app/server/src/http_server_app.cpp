@@ -3,6 +3,9 @@
 
 void HttpServer::ServerInitApp()
 {
+    /**
+     * @brief 获取应用配置
+     */
     m_svr.Post("/api/app/config", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -32,9 +35,9 @@ void HttpServer::ServerInitApp()
                 }}
             }},
             {"info", {
-                {"device", "LicheeRV-Nano"},
-                {"version", "1.0.0"},
-                {"uptime", 3600}
+                {"key", m_context.deviceInfo.key},
+                {"name", m_context.deviceInfo.name},
+                {"version", m_context.deviceInfo.version}
             }}
         };
 
@@ -52,7 +55,7 @@ void HttpServer::ServerInitApp()
 
         resp = {
             {"code", 200},
-            {"name", "device-01"},
+            {"name", m_context.deviceInfo.key},
             {"interval", 1000}
         };
 

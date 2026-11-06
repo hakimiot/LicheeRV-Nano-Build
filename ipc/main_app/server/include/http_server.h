@@ -5,10 +5,19 @@
 #include "camera_capture.h"
 #include "rtmp_streamer.h"
 #include "video_reader.h"
+#include "device_info.h"
 
+/**
+ * @brief 验证认证令牌
+ * @param ip 客户端IP
+ * @param token 认证令牌
+ * @param resp 响应JSON
+ * @param res HTTP响应
+ * @note 本地调用时，不验证令牌，传入空字符串即可
+ */
 #define VRRIFY_CODE(ip, token, resp, res) do { \
     int ret = VerifyToken(ip, token); \
-    if (ret < 0) { \
+    if (ret < 0 && ip != "127.0.0.1") { \
         resp = { \
             {"code", 500}, \
             {"error", "token verift failed"} \
@@ -24,6 +33,8 @@ struct DataContext {
     RTMPStreamer& liveStreamer;
     RTMPStreamer& replayStreamer;
     VideoReader& videoReader;
+
+    DeviceInfo::DeviceInfo_t deviceInfo;
 };
 
 struct TokenInfo_t {

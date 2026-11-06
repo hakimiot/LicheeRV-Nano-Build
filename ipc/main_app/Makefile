@@ -7,18 +7,19 @@ PACKAGE_ROOT = ..
 
 MW_PATH = $(SDK_ROOT)/middleware/v2
 INTERDRV_PATH = $(SDK_ROOT)/osdrv/interdrv/v2
+COMMON_PATH = ${SDK_ROOT}/ipc/common
 
 MW_LIB = $(MW_PATH)/lib
 MW_3RD_LIB = $(MW_PATH)/lib/3rd
 
 # 头文件目录
 override CFLAGS += -Icapture/include
-override CFLAGS += -Icommon/include
 override CFLAGS += -Ilog/include
 override CFLAGS += -Iserver/include
 override CFLAGS += -Istreamer/include
 override CFLAGS += -Ivideo/include
 # override CFLAGS += -Iwatermark/include
+override CFLAGS += -I$(COMMON_PATH)/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include
 override CFLAGS += -I$(STAGING_DIR)/usr/include/ffmpeg
 override CFLAGS += -I$(STAGING_DIR)/usr/include/mqtt
@@ -48,11 +49,6 @@ override LDFLAGS += -L$(MW_PATH)/lib -L$(MW_PATH)/lib/3rd \
 # 所有源文件
 SRCS = main.cpp
 SRCS += capture/src/camera_capture.cpp
-SRCS += common/src/device_safe.cpp
-SRCS += common/src/file_system.cpp
-SRCS += common/src/power_mamage.cpp
-SRCS += common/src/random.cpp
-SRCS += common/src/wlan.cpp
 SRCS += log/src/mainapp_log.cpp
 SRCS += server/src/http_server_app.cpp
 SRCS += server/src/http_server_capture.cpp
@@ -65,6 +61,12 @@ SRCS += server/src/http_server.cpp
 SRCS += streamer/src/rtmp_streamer.cpp
 SRCS += video/src/video_writer.cpp
 SRCS += video/src/video_reader.cpp
+SRCS += ${COMMON_PATH}/src/device_info.cpp
+SRCS += ${COMMON_PATH}/src/device_safe.cpp
+SRCS += ${COMMON_PATH}/src/file_system.cpp
+SRCS += ${COMMON_PATH}/src/power_mamage.cpp
+SRCS += ${COMMON_PATH}/src/random.cpp
+SRCS += ${COMMON_PATH}/src/wlan.cpp
 # SRCS += watermark/src/watermark_overlay.cpp
 
 OBJS = $(SRCS:.cpp=.o)

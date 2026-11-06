@@ -3,4 +3,13 @@
 # Start ipc task
 #
 
+# 尽力在启动 main_app 前同步一次系统时间，避免录像文件名出现 1970 等异常时间戳。
+# 设备无 RTC 后备电池时上电时间为 1970，NTP 同步需要网络。
+# 若网络未就绪或同步失败则忽略，main_app 内部仍会等待有效时间后再开始录像。
+if command -v ntpdate >/dev/null 2>&1; then
+	timeout 10 ntpdate -s -p 2 -t 3 \
+		0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org \
+		>/dev/null 2>&1 || true
+fi
+
 /usr/bin/main_app

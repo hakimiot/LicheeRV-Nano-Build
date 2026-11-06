@@ -3,6 +3,11 @@
 
 void HttpServer::ServerInitUser()
 {
+    /**
+     * @brief 用户登录
+     * @param username 用户名
+     * @param password 密码
+     */
     m_svr.Post("/api/user/login", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;

@@ -175,3 +175,16 @@ bool FileSystem::ScanMediaJson(nlohmann::json& out, std::string& error, const st
 
     return true;
 }
+
+std::string FileSystem::ReadFile(const std::string& path)
+{
+    std::ifstream ifs(path, std::ios::binary);
+    if (!ifs.is_open()) {
+        std::cerr << "Failed to open: " << path << std::endl;
+        return "";
+    }
+    // 用迭代器一次性读入
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                         std::istreambuf_iterator<char>());
+    return content;
+}

@@ -2,6 +2,8 @@
 #include <thread>
 #include <atomic>
 #include <csignal>
+#include <ctime>
+#include <iomanip>
 #include <SimpleIni.h>
 
 #include "mainapp_log.h"
@@ -11,6 +13,7 @@
 #include "video_reader.h"
 #include "rtmp_streamer.h"
 #include "http_server.h"
+#include "device_info.h"
 
 std::atomic<bool> g_running(true);
 
@@ -26,6 +29,45 @@ static void SignalRegister(void)
     signal(SIGTERM, SignalHandler);
     signal(SIGQUIT, SignalHandler);
     signal(SIGHUP, SignalHandler);
+}
+
+/**
+ * 等待系统时间有效（非 1970 等未同步的异常时间）
+ *
+ * 设备没有 RTC 后备电池时，上电后系统时间从 1970 开始，NTP 同步在后台进行，
+ * 若此时 main_app 已开始录像，文件名会以 1970 开头。
+ * 本函数轮询系统时钟，直到年份达到 minValidYear 或超过 maxWaitSec。
+ *
+ * @return true 表示时间已有效；false 表示超时后仍无效（调用方自行决定是否继续）
+ */
+static bool WaitForValidTime(int maxWaitSec = 300, int minValidYear = 2026)
+{
+    auto start = std::chrono::steady_clock::now();
+    while (true) {
+        auto now = std::chrono::system_clock::now();
+        std::time_t t = std::chrono::system_clock::to_time_t(now);
+        std::tm tmBuf;
+        std::tm* tm = localtime_r(&t, &tmBuf);
+        int year = tm ? (tm->tm_year + 1900) : 0;
+
+        if (year >= minValidYear) {
+            LOG_I << "System time is valid: "
+                  << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
+            return true;
+        }
+
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - start).count();
+        if (elapsed >= maxWaitSec) {
+            LOG_W << "System time still invalid (year=" << year
+                  << ") after " << maxWaitSec << "s, proceed anyway";
+            return false;
+        }
+
+        LOG_I << "Waiting for valid system time... current year=" << year
+              << " (" << elapsed << "s / " << maxWaitSec << "s)";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 static bool IsKeyFrame(const uint8_t* data, size_t len)
@@ -182,6 +224,9 @@ int main(int argc, char **argv)
     cfg.srcFps = ini.GetLongValue("capture", "fps", 30);
     std::string rtmpUrl = ini.GetValue("rtmp", "url", "");
 
+    // 初始化设备信息
+    DeviceInfo::DeviceInfo_t deviceInfo = DeviceInfo::DeviceInfo();
+
     // 初始化摄像头采集器
     CameraCapture cameraCapture(cfg);
     if (!cameraCapture.IsInitialized()) {
@@ -193,17 +238,15 @@ int main(int argc, char **argv)
 
     // 初始化直播推流器
     RTMPStreamer liveStreamer;
-    liveStreamer.Init(rtmpUrl + "/live/stream/" + "123456", cfg.width, cfg.height, cfg.dstFps);
+    liveStreamer.Init(rtmpUrl + "/live/stream/" + deviceInfo.key, cfg.width, cfg.height, cfg.dstFps);
 
     // 初始化回放推流器
     RTMPStreamer replayStreamer;
-    replayStreamer.Init(rtmpUrl + "/replay/stream/" + "123456", cfg.width, cfg.height, cfg.dstFps);
+    replayStreamer.Init(rtmpUrl + "/replay/stream/" + deviceInfo.key, cfg.width, cfg.height, cfg.dstFps);
 
     VideoReader videoReader;
 
     RingQueue<StreamPacket> queue(30);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
     // 初始化数据上下文
     DataContext context = {
@@ -211,17 +254,28 @@ int main(int argc, char **argv)
         cameraCapture,
         liveStreamer,
         replayStreamer,
-        videoReader
+        videoReader,
+
+        deviceInfo
     };
 
     context.videoReader.SetStreamer(&context.replayStreamer);
 
     HttpServer server(context);
 
-    // 创建线程
+    // 先启动 HTTP 服务器，确保首次启动时用户可通过 Web 配置网络，
+    // 之后才能进行 NTP 时间同步
+    std::thread httpThread(HttpThread, std::ref(server), std::ref(context));
+
+    // 等待系统时间同步，避免录像文件名出现 1970 等异常时间戳
+    WaitForValidTime();
+
+    // 给硬件/网络留出稳定时间
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+    // 启动采集和录像线程
     std::thread capThread(CaptureThread, std::ref(cameraCapture), std::ref(queue), std::ref(g_running), std::ref(liveStreamer));
     std::thread savThread(SaveThread, std::ref(queue), std::ref(g_running), std::ref(cfg));
-    std::thread httpThread(HttpThread, std::ref(server), std::ref(context));
     // std::thread watermarkThread(WatermarkThread, std::ref(cameraCapture), std::ref(g_running));
 
     while (g_running) {

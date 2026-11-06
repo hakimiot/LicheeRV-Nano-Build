@@ -23,4 +23,6 @@ namespace FileSystem
     long long size(const char *filename);
 
     bool ScanMediaJson(nlohmann::json& out, std::string& error, const std::string& date = "");
+
+    std::string ReadFile(const std::string& path);
 };

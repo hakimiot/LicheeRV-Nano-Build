@@ -3,6 +3,9 @@
 
 void HttpServer::ServerInitMedia()
 {
+    /**
+     * @brief 获取媒体文件列表
+     */
     m_svr.Post("/api/media/list", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;

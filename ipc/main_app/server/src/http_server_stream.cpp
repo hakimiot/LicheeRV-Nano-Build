@@ -4,6 +4,12 @@
 
 void HttpServer::ServerInitStream()
 {
+    /**
+     * @brief 直播流控制
+     * @param mode 模式，set或get
+     * @param status 直播流状态，set时必填
+     * @param file 媒体文件路径，set时必填
+     */
     m_svr.Post("/api/stream/live", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -34,7 +40,14 @@ void HttpServer::ServerInitStream()
 
         SetJson(res, resp);
     });
-    
+
+    /**
+     * @brief 回放流控制
+     * @param mode 模式，set或get
+     * @param status 回放流状态，set时必填，可选值: media, start, paused, stop, seek
+     * @param file 媒体文件路径，status为media时必填
+     * @param seek 偏移时间，status为seek时必填
+     */
     m_svr.Post("/api/stream/replay", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;
@@ -94,6 +107,10 @@ void HttpServer::ServerInitStream()
         SetJson(res, resp);
     });
 
+    /**
+     * @brief 设置回放流URL
+     * @param url 回放流URL
+     */
     m_svr.Post("/api/stream/seturl", [this](const httplib::Request& req, httplib::Response& res) {
         nlohmann::json body = nlohmann::json::parse(req.body);
         nlohmann::json resp;

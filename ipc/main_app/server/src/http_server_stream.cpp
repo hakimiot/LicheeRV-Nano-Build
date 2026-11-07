@@ -24,12 +24,14 @@ void HttpServer::ServerInitStream()
             bool status = body["status"];
             if (status) m_context.liveStreamer.Start();
             else m_context.liveStreamer.Stop();
-            resp = {{"code", 200}, {"msg", "success"}};
+            resp = {{"code", 200}, {"data", {}}};
         } else if (mode == "get") {
             resp = {
                 {"code", 200},
-                {"connect", m_context.liveStreamer.IsConnected()},
-                {"stream", m_context.liveStreamer.IsStreaming()}
+                {"data", {
+                    {"connect", m_context.liveStreamer.IsConnected()},
+                    {"stream", m_context.liveStreamer.IsStreaming()}
+                }}
             };
         } else {
             resp = {
@@ -65,20 +67,25 @@ void HttpServer::ServerInitStream()
                 if (!m_context.videoReader.Open(file)) {
                     resp = {{"code", 500}, {"error", "open: \"" + file + "\" failed"}};
                 } else {
-                    resp = {{"code", 200}, {"url", m_context.replayStreamer.GetRtmpUrl()}};
+                    resp = {
+                        {"code", 200},
+                        {"data", {
+                            {"url", m_context.replayStreamer.GetRtmpUrl()}
+                        }}
+                    };
                 }
             } else if (status == "start") {
                 m_context.replayStreamer.Start();
                 m_context.videoReader.Play();
-                resp = {{"code", 200}, {"msg", "success"}};
+                resp = {{"code", 200}, {"data", {}}};
             } else if (status == "paused") {
                 m_context.videoReader.Pause();
-                resp = {{"code", 200}, {"msg", "success"}};
+                resp = {{"code", 200}, {"data", {}}};
             } else if (status == "stop") {
                 m_context.videoReader.Stop();
                 m_context.videoReader.Close();
                 m_context.replayStreamer.Stop();
-                resp = {{"code", 200}, {"msg", "success"}};
+                resp = {{"code", 200}, {"data", {}}};
             } else if (status == "seek") {
                 if (!body.contains("seek") || !body["seek"].is_number()) {
                     resp = {{"code", 400}, {"error", "missing seek value"}};
@@ -87,7 +94,12 @@ void HttpServer::ServerInitStream()
                     if (!m_context.videoReader.Seek(targetTimeMs)) {
                         resp = {{"code", 500}, {"error", "seek failed or timeout"}};
                     } else {
-                        resp = {{"code", 200}, {"seek", targetTimeMs}};
+                        resp = {
+                            {"code", 200},
+                            {"data", {
+                                {"seek", targetTimeMs}
+                            }}
+                        };
                     }
                 }
             } else {
@@ -96,9 +108,11 @@ void HttpServer::ServerInitStream()
         } else if (mode == "get") {
             resp = {
                 {"code", 200},
-                {"connect", m_context.replayStreamer.IsConnected()},
-                {"stream", m_context.replayStreamer.IsStreaming()},
-                {"reader", {{"state", m_context.videoReader.GetStateString()}}}
+                {"data", {
+                    {"connect", m_context.replayStreamer.IsConnected()},
+                    {"stream", m_context.replayStreamer.IsStreaming()},
+                    {"reader", {{"state", m_context.videoReader.GetStateString()}}}
+                }}
             };
         } else {
             resp = {{"code", 500}, {"error", "mode: \"" + mode + "\" is illegal"}};
@@ -135,7 +149,7 @@ void HttpServer::ServerInitStream()
         if (rc < 0) {
             resp = {{"code", 500}, {"error", "failed to save config"}};
         } else {
-            resp = {{"code", 200}, {"msg", "success"}};
+            resp = {{"code", 200}, {"data", {}}};
         }
 
         SetJson(res, resp);

@@ -18,7 +18,7 @@ void HttpServer::ServerInitCapture()
 
         resp = {
             {"code", 200},
-            {"capture", {
+            {"data", {
                 {"width", m_context.cameraCapture.config().width},
                 {"height", m_context.cameraCapture.config().height},
                 {"fps", m_context.cameraCapture.config().srcFps}
@@ -73,7 +73,7 @@ void HttpServer::ServerInitCapture()
         } else {
             resp = {
                 {"code", 200},
-                {"msg", "success"}
+                {"data", {}}
             };
         }
 

@@ -20,8 +20,10 @@ void HttpServer::ServerInitUser()
         if (ret) {
             resp = {
                 {"code", 200},
-                {"token", GetToken(clientIp)},
-                {"ip", clientIp}
+                {"data", {
+                    {"token", GetToken(clientIp)},
+                    {"ip", clientIp}
+                }}
             };
         } else {
             resp = {

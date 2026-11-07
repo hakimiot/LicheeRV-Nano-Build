@@ -1,8 +1,8 @@
 window.Home_mount = function (root, data) {
   const d = data || {};
-  const devModel = root.querySelector('#home-device-model');
+  const devKey = root.querySelector('#home-device-key');
   const devVer = root.querySelector('#home-device-version');
-  const devUp  = root.querySelector('#home-device-uptime');
+  const devName  = root.querySelector('#home-device-name');
   
   const capWidth = root.querySelector('#home-capture-width');
   const capHeight = root.querySelector('#home-capture-height');
@@ -16,10 +16,26 @@ window.Home_mount = function (root, data) {
   const replaySta = root.querySelector('#home-replay-status');
   const replayUrl  = root.querySelector('#home-replay-url');
 
+  const netCon = root.querySelector('#home-network-connect');
+  const netIp = root.querySelector('#home-network-ip');
+  const netMac = root.querySelector('#home-network-mac');
+  const netGateway = root.querySelector('#home-network-gateway');
 
-  devModel.textContent = d.info.device  || '-';
-  devVer.textContent = d.info.version || '-';
-  devUp.textContent  = formatUptime(d.info.uptime || 0);
+  const memTotal = root.querySelector('#home-memory-total');
+  const memFree = root.querySelector('#home-memory-free');
+  const memUsed = root.querySelector('#home-memory-used');
+
+  const diskTotal = root.querySelector('#home-disk-total');
+  const diskFree = root.querySelector('#home-disk-free');
+  const diskUsed = root.querySelector('#home-disk-used');
+
+  const cpuLoad = root.querySelector('#home-cpu-load');
+  const cpuTemp = root.querySelector('#home-cpu-temp');
+  const cpuTime = root.querySelector('#home-cpu-time');
+
+  devKey.textContent = d.system.info.key  || '-';
+  devVer.textContent = d.system.info.version || '-';
+  devName.textContent  = d.system.info.name || '-';
   
   capWidth.textContent = d.capture.width  || '-';
   capHeight.textContent = d.capture.height || '-';
@@ -32,6 +48,23 @@ window.Home_mount = function (root, data) {
   replayCon.textContent = fmtBool(d.rtmp.replay.connect, '已连接', '未连接');
   replaySta.textContent = fmtBool(d.rtmp.replay.stream, '推流中', '已停止');
   replayUrl.textContent  = d.rtmp.replay.url || '-';
+
+  // netCon.textContent = fmtBool(d.network.connect, '已连接', '未连接');
+  // netIp.textContent = d.network.ip || '-';
+  // netMac.textContent = d.network.mac || '-';
+  // netGateway.textContent = d.network.gateway || '-';
+  
+  memTotal.textContent = d.system.memory.total || '-';
+  memFree.textContent = d.system.memory.free || '-';
+  memUsed.textContent = d.system.memory.used || '-';
+  
+  diskTotal.textContent = d.system.disk.total || '-';
+  diskFree.textContent = d.system.disk.free || '-';
+  diskUsed.textContent = d.system.disk.used || '-';
+  
+  cpuLoad.textContent = d.system.cpu.load || '-';
+  cpuTemp.textContent = d.system.cpu.temp || '-';
+  cpuTime.textContent = formatUptime(d.system.cpu.uptime) || '-';
 };
 
 function formatUptime(sec) {

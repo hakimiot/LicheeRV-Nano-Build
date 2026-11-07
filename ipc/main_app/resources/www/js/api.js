@@ -82,7 +82,8 @@ async function apiPost(url, body = {}) {
   const errorMsg = typeof data.error === 'string' ? data.error : '';
 
   if (code === 200) {
-    return data;
+    // 成功响应统一将业务数据放在 data 字段中，这里直接返回业务数据
+    return (data.data !== undefined && data.data !== null) ? data.data : {};
   }
 
   if (isTokenFailed(code, errorMsg)) {

@@ -100,24 +100,19 @@ async function handleConnect(listEl, btn, ssid, isOpen) {
   btn.textContent = '连接中…';
 
   try {
-    const r = await apiPost('/api/network/connect', { ssid, pswd });
-    if (r && r.code === 200) {
-      btn.textContent = '已连接';
-      btn.classList.remove('connect');
-      btn.classList.add('connected');
-      btn.disabled = true;
-      const row = btn.closest('.wlan-item');
-      if (row) row.classList.add('is-connected');
+    await apiPost('/api/network/connect', { ssid, pswd });
+    // apiPost 在 code !== 200 时会抛异常，能走到这里说明连接成功
+    btn.textContent = '已连接';
+    btn.classList.remove('connect');
+    btn.classList.add('connected');
+    btn.disabled = true;
+    const row = btn.closest('.wlan-item');
+    if (row) row.classList.add('is-connected');
 
-      // 其他行按钮恢复（只允许一个连接）
-      listEl.querySelectorAll('.wlan-btn.connect').forEach(b => {
-        if (b !== btn) { b.disabled = false; }
-      });
-    } else {
-      btn.textContent = oldText;
-      btn.disabled = false;
-      alert('连接失败：' + (r && r.error ? r.error : '未知错误'));
-    }
+    // 其他行按钮恢复（只允许一个连接）
+    listEl.querySelectorAll('.wlan-btn.connect').forEach(b => {
+      if (b !== btn) { b.disabled = false; }
+    });
   } catch (e) {
     btn.textContent = oldText;
     btn.disabled = false;

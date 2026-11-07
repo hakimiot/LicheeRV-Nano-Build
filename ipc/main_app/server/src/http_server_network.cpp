@@ -15,8 +15,11 @@ void HttpServer::ServerInitNetwork()
 
         VRRIFY_CODE(clientIp, token, resp, res);
 
-        resp = Wlan::ScabWifiJson("wlan0");
-        resp["code"] = 200;
+        nlohmann::json wifiList = Wlan::ScabWifiJson("wlan0");
+        resp = {
+            {"code", 200},
+            {"data", wifiList}
+        };
 
         SetJson(res, resp);
     });
@@ -40,7 +43,7 @@ void HttpServer::ServerInitNetwork()
 
         std::string error;
         if (Wlan::ConnectWifi(ssid, pswd, error)) {
-            resp = {{"code", 200}, {"msg", "success"}};
+            resp = {{"code", 200}, {"data", {}}};
         } else { 
             resp = {{"code", 500}, {"error", error}};
         }

@@ -60,7 +60,7 @@ void HttpServer::ServerInit()
         std::string path = req.path;
         LOG_I << "req.body = " << req.body;
         res.status = 404;
-        res.set_content(R"({"error": "API endpoint not found", "path": ")" + path + R"("})",  "application/json");
+        res.set_content(R"({"code": 404, "error": "API endpoint not found", "path": ")" + path + R"("})",  "application/json");
     });
 }
 

@@ -25,8 +25,10 @@ void HttpServer::ServerInitMedia()
         if (FileSystem::ScanMediaJson(out, error, date) != true) {
             resp = {{"code", 500}, {"error", error}};
         } else {
-            resp = out;
-            resp["code"] = 200;
+            resp = {
+                {"code", 200},
+                {"data", out}
+            };
         }
 
         SetJson(res, resp);

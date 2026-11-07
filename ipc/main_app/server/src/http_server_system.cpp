@@ -16,7 +16,7 @@ void HttpServer::ServerInitSystem()
 
         VRRIFY_CODE(clientIp, token, resp, res);
 
-        resp = {{"code", 200}, {"msg", "rebooting"}};
+        resp = {{"code", 200}, {"data", {}}};
         SetJson(res, resp);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -37,9 +37,11 @@ void HttpServer::ServerInitSystem()
 
         resp = {
             {"code", 200},
-            {"key", m_context.deviceInfo.key},
-            {"name", m_context.deviceInfo.name},
-            {"version", m_context.deviceInfo.version}
+            {"data", {
+                {"key", m_context.deviceInfo.key},
+                {"name", m_context.deviceInfo.name},
+                {"version", m_context.deviceInfo.version}
+            }}
         };
         SetJson(res, resp);
     });
@@ -62,14 +64,16 @@ void HttpServer::ServerInitSystem()
         if (DeviceInfo::GetMemoryInfo(memoryInfo, error)) {
             resp = {
                 {"code", 200},
-                {"total", memoryInfo.total},
-                {"used", memoryInfo.used},
-                {"free", memoryInfo.free}
+                {"data", {
+                    {"total", memoryInfo.total},
+                    {"used", memoryInfo.used},
+                    {"free", memoryInfo.free}
+                }}
             };
         } else {
             resp = {
                 {"code", 500},
-                {"msg", error}
+                {"error", error}
             };
         }
         SetJson(res, resp);
@@ -92,14 +96,16 @@ void HttpServer::ServerInitSystem()
         if (DeviceInfo::GetDiskInfo("/", diskInfo, error)) {
             resp = {
                 {"code", 200},
-                {"total", diskInfo.total},
-                {"used", diskInfo.used},
-                {"free", diskInfo.free}
+                {"data", {
+                    {"total", diskInfo.total},
+                    {"used", diskInfo.used},
+                    {"free", diskInfo.free}
+                }}
             };
         } else {
             resp = {
                 {"code", 500},
-                {"msg", error}
+                {"error", error}
             };
         }
         SetJson(res, resp);
@@ -122,14 +128,16 @@ void HttpServer::ServerInitSystem()
         if (DeviceInfo::GetCpuInfo(cpuInfo, error)) {
             resp = {
                 {"code", 200},
-                {"load", cpuInfo.load},
-                {"bootTime", cpuInfo.bootTime},
-                {"temperature", cpuInfo.temperature}
+                {"data", {
+                    {"load", cpuInfo.load},
+                    {"bootTime", cpuInfo.bootTime},
+                    {"temperature", cpuInfo.temperature}
+                }}
             };
         } else {
             resp = {
                 {"code", 500},
-                {"msg", error}
+                {"error", error}
             };
         }
         SetJson(res, resp);

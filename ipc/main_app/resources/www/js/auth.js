@@ -40,16 +40,18 @@ async function doLogin(username, password) {
     throw new Error(data.error || `登录失败 (code ${data.code})`);
   }
 
-  if (typeof data.token !== 'string' || !data.token) {
+  // 成功响应中 token/ip 位于 data 字段内
+  const payload = data.data || {};
+  if (typeof payload.token !== 'string' || !payload.token) {
     console.error('[doLogin] 缺少 token:', data);
     throw new Error('登录响应缺少 token');
   }
 
-  if (!setToken(data.token)) {
+  if (!setToken(payload.token)) {
     console.error('[doLogin] token 保存失败');
     throw new Error('token 保存失败');
   }
-  if (data.ip) localStorage.setItem(IP_KEY, data.ip);
+  if (payload.ip) localStorage.setItem(IP_KEY, payload.ip);
   return data;
 }
 

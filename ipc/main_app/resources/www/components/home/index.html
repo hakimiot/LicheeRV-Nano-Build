@@ -3,15 +3,16 @@
 <div class="cmp-home">
   <h2 class="card-title">主页</h2>
 
-  <div class="card-grid"> 
+  <div class="card-grid">
     <div class="sub-card">
       <h3 class="card-title">
-        <img class="title-icon" src="icons/home/device.svg" alt="" style="width:18px; height:18px;">
-        <span>设备信息</span>
+        <img class="title-icon" src="icons/home/network.svg" alt="" style="width:24px; height:24px;">
+        <span>网络信息</span>
       </h3>
-      <p><b>设备型号：</b><span id="home-device-model">-</span></p>
-      <p><b>固件版本：</b><span id="home-device-version">-</span></p>
-      <p><b>运行时长：</b><span id="home-device-uptime">-</span></p>
+      <p><b>连接状态：</b><span id="home-network-connect">-</span></p>
+      <p><b>IP地址：</b><span id="home-network-ip">-</span></p>
+      <p><b>MAC地址：</b><span id="home-network-mac">-</span></p>
+      <p><b>网关：</b><span id="home-network-gateway">-</span></p>
     </div>
 
     <div class="sub-card">
@@ -44,6 +45,50 @@
       <p><b>连接状态：</b><span id="home-replay-connect">-</span></p>
       <p><b>推流状态：</b><span id="home-replay-status">-</span></p>
       <p><b>推流地址：</b><span id="home-replay-url">-</span></p>
+    </div>
+  </div>
+
+  <div class="card-grid"> 
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/memory.svg" alt="" style="width:24px; height:24px;">
+        <span>内存信息</span>
+      </h3>
+      <p><b>总大小：</b><span id="home-memory-total">-</span></p>
+      <p><b>可用大小：</b><span id="home-memory-free">-</span></p>
+      <p><b>已用大小：</b><span id="home-memory-used">-</span></p>
+    </div>
+
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/disk.svg" alt="" style="width:18px; height:18px;">
+        <span>磁盘信息</span>
+      </h3>
+      <p><b>总大小：</b><span id="home-disk-total">-</span></p>
+      <p><b>可用大小：</b><span id="home-disk-free">-</span></p>
+      <p><b>已用大小：</b><span id="home-disk-used">-</span></p>
+    </div>
+  </div>
+
+  <div class="card-grid"> 
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/device.svg" alt="" style="width:18px; height:18px;">
+        <span>设备信息</span>
+      </h3>
+      <p><b>设备ID：</b><span id="home-device-key">-</span></p>
+      <p><b>固件名称：</b><span id="home-device-name">-</span></p>
+      <p><b>固件版本：</b><span id="home-device-version">-</span></p>
+    </div>
+
+    <div class="sub-card">
+      <h3 class="card-title">
+        <img class="title-icon" src="icons/home/cpu.svg" alt="" style="width:18px; height:18px;">
+        <span>处理器信息</span>
+      </h3>
+      <p><b>负载：</b><span id="home-cpu-load">-</span></p>
+      <p><b>运行时间：</b><span id="home-cpu-time">-</span></p>
+      <p><b>温度：</b><span id="home-cpu-temp">-</span></p>
     </div>
   </div>
 </div>

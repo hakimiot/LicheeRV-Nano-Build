@@ -1,5 +1,5 @@
 #include <SimpleIni.h>
-#include "mainapp_log.h"
+#include "log.h"
 #include "http_server.h"
 
 void HttpServer::ServerInitStream()

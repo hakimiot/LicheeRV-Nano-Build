@@ -1,0 +1,8 @@
+# ipc/mqtt_app/Config.in
+
+config BR2_PACKAGE_MQTT_APP
+    bool "mqtt_app"
+    help
+      MQTT application.
+      
+      This is a simple MQTT client program.

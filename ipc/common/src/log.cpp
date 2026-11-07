@@ -3,7 +3,7 @@
 #include <sstream>
 #include <ctime>
 #include <cstring>
-#include "mainapp_log.h"
+#include "log.h"
 
 std::string GetCurrentTime()
 {

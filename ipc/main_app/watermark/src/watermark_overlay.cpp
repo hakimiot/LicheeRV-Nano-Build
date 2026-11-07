@@ -1,6 +1,6 @@
 
 #include "watermark_overlay.h"
-#include "mainapp_log.h"
+#include "log.h"
 
 #include <ctime>
 #include <cstdio>

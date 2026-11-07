@@ -3,6 +3,6 @@
 config BR2_PACKAGE_MAIN_APP
     bool "main_app"
     help
-      Hello World application.
+      Main application.
       
-      This is a simple Hello World program.
+      This is Main program.

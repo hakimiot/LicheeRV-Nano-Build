@@ -61,8 +61,8 @@ window.Home_mount = function (root, data) {
   diskUsed.textContent = d.system.disk.used || '-';
   
   cpuLoad.textContent = d.system.cpu.load || '-';
-  cpuTemp.textContent = d.system.cpu.temp || '-';
-  cpuTime.textContent = formatUptime(d.system.cpu.uptime) || '-';
+  cpuTemp.textContent = d.system.cpu.temperature || '-';
+  cpuTime.textContent = formatUptime(d.system.cpu.bootTime) || '-';
 };
 
 function formatUptime(sec) {

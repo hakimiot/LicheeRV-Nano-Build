@@ -1,4 +1,4 @@
-#include "mainapp_log.h"
+#include "log.h"
 #include "random.h"
 #include "http_server.h"
 

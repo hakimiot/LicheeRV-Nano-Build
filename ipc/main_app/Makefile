@@ -14,7 +14,6 @@ MW_3RD_LIB = $(MW_PATH)/lib/3rd
 
 # 头文件目录
 override CFLAGS += -Icapture/include
-override CFLAGS += -Ilog/include
 override CFLAGS += -Iserver/include
 override CFLAGS += -Istreamer/include
 override CFLAGS += -Ivideo/include
@@ -34,7 +33,6 @@ override CFLAGS += -I$(INTERDRV_PATH)/include/chip/mars/uapi/
 
 override LDFLAGS += -lpam
 override LDFLAGS += -lavcodec -lavformat -lavutil -lswscale
-override LDFLAGS += -lpaho-mqttpp3 -lpaho-mqtt3a
 override LDFLAGS += $(MW_LIBS)
 override LDFLAGS += -L$(MW_PATH)/lib -L$(MW_PATH)/lib/3rd \
                     -Wl,--start-group \
@@ -49,7 +47,6 @@ override LDFLAGS += -L$(MW_PATH)/lib -L$(MW_PATH)/lib/3rd \
 # 所有源文件
 SRCS = main.cpp
 SRCS += capture/src/camera_capture.cpp
-SRCS += log/src/mainapp_log.cpp
 SRCS += server/src/http_server_app.cpp
 SRCS += server/src/http_server_capture.cpp
 SRCS += server/src/http_server_media.cpp
@@ -64,6 +61,7 @@ SRCS += video/src/video_reader.cpp
 SRCS += ${COMMON_PATH}/src/device_info.cpp
 SRCS += ${COMMON_PATH}/src/device_safe.cpp
 SRCS += ${COMMON_PATH}/src/file_system.cpp
+SRCS += ${COMMON_PATH}/src/log.cpp
 SRCS += ${COMMON_PATH}/src/power_mamage.cpp
 SRCS += ${COMMON_PATH}/src/random.cpp
 SRCS += ${COMMON_PATH}/src/network.cpp

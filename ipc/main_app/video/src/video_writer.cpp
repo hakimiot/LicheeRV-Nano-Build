@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <ctime>
 #include <fstream>
-#include "mainapp_log.h"
+#include "log.h"
 #include "file_system.h"
 #include "video_writer.h"
 

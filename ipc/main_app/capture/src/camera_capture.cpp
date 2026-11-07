@@ -1,6 +1,6 @@
 #include <chrono>
 #include "cvi_type.h"
-#include "mainapp_log.h"
+#include "log.h"
 #include "camera_capture.h"
 
 CameraCapture::CameraCapture(const CameraConfig &cfg)

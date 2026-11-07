@@ -1,0 +1,138 @@
+<link rel="stylesheet" href="css/card.css">
+<style>
+  .cmp-settings .card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e2e8f0;
+    margin-top: 14px;
+  }
+
+  .cmp-settings .card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 14px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .cmp-settings label {
+    display: block;
+    font-size: 13px;
+    color: #334155;
+    margin-bottom: 12px;
+  }
+
+  .cmp-settings label span {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .cmp-settings input[type="text"],
+  .cmp-settings input[type="number"] {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+  }
+
+  .cmp-settings input:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+
+  .cmp-settings .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .cmp-settings .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .cmp-settings button {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  .cmp-settings button.primary {
+    background: #3b82f6;
+    color: #ffffff;
+  }
+  .cmp-settings button.primary:hover { filter: brightness(1.08); }
+  .cmp-settings button.danger {
+    background: #ef4444;
+    color: #ffffff;
+  }
+  .cmp-settings button.danger:hover { filter: brightness(1.08); }
+
+  .cmp-settings .hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: -8px;
+    margin-bottom: 12px;
+  }
+
+  .cmp-settings .reboot-area {
+    margin-top: 20px;
+    text-align: right;
+  }
+</style>
+
+<div class="cmp-settings">
+  <h2 class="card-title">设置</h2>
+
+  <!-- RTMP 服务器地址 -->
+  <div class="card">
+    <h3>推流服务器</h3>
+    <label>
+      <span>RTMP 服务器地址</span>
+      <input id="cfg-rtmp-url" type="text" placeholder="rtmp://host:port">
+    </label>
+    <p class="hint">仅填写服务器基础地址，设备标识（key）会自动追加，无需手动输入。</p>
+    <div class="actions">
+      <button id="cfg-rtmp-save" class="primary">保存</button>
+    </div>
+  </div>
+
+  <!-- 图像采集参数 -->
+  <div class="card">
+    <h3>图像采集</h3>
+    <div class="row">
+      <label>
+        <span>宽度</span>
+        <input id="cfg-cap-width" type="number" min="1">
+      </label>
+      <label>
+        <span>高度</span>
+        <input id="cfg-cap-height" type="number" min="1">
+      </label>
+      <label>
+        <span>帧率 (fps)</span>
+        <input id="cfg-cap-fps" type="number" min="1">
+      </label>
+    </div>
+    <div class="actions">
+      <button id="cfg-cap-save" class="primary">保存</button>
+    </div>
+  </div>
+
+  <!-- 重启按钮 -->
+  <div class="reboot-area">
+    <button id="cfg-reboot" class="danger">重启设备</button>
+  </div>
+</div>

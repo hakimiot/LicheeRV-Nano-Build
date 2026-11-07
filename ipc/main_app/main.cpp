@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <SimpleIni.h>
 
-#include "mainapp_log.h"
+#include "log.h"
 #include "camera_capture.h"
 #include "ring_queue.h"
 #include "video_writer.h"

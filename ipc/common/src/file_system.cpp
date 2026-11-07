@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <cstring>
 #include <algorithm>
-#include "mainapp_log.h"
+#include "log.h"
 #include "file_system.h"
 
 // 判断是否是目录

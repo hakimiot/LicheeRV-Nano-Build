@@ -4,7 +4,7 @@ extern "C" {
 #include <libavutil/opt.h>
 #include <libavutil/error.h>
 }
-#include "mainapp_log.h"
+#include "log.h"
 #include "rtmp_streamer.h"
 
 RTMPStreamer::RTMPStreamer()

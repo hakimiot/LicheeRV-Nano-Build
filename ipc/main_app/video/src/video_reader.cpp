@@ -13,7 +13,7 @@ extern "C" {
 #include <libavutil/mathematics.h>
 }
 
-#include "mainapp_log.h"
+#include "log.h"
 #include "rtmp_streamer.h"
 
 namespace {

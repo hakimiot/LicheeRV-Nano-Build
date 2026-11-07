@@ -16,10 +16,9 @@ window.Home_mount = function (root, data) {
   const replaySta = root.querySelector('#home-replay-status');
   const replayUrl  = root.querySelector('#home-replay-url');
 
-  const netCon = root.querySelector('#home-network-connect');
-  const netIp = root.querySelector('#home-network-ip');
-  const netMac = root.querySelector('#home-network-mac');
-  const netGateway = root.querySelector('#home-network-gateway');
+  const netInterface = root.querySelector('#home-network-interface');
+  const netIp4 = root.querySelector('#home-network-ip4');
+  const netIp6 = root.querySelector('#home-network-ip6');
 
   const memTotal = root.querySelector('#home-memory-total');
   const memFree = root.querySelector('#home-memory-free');
@@ -48,11 +47,10 @@ window.Home_mount = function (root, data) {
   replayCon.textContent = fmtBool(d.rtmp.replay.connect, '已连接', '未连接');
   replaySta.textContent = fmtBool(d.rtmp.replay.stream, '推流中', '已停止');
   replayUrl.textContent  = d.rtmp.replay.url || '-';
-
-  // netCon.textContent = fmtBool(d.network.connect, '已连接', '未连接');
-  // netIp.textContent = d.network.ip || '-';
-  // netMac.textContent = d.network.mac || '-';
-  // netGateway.textContent = d.network.gateway || '-';
+  
+  netInterface.textContent = d.network.interface || '-';
+  netIp4.textContent = d.network.ip.ipv4 || '-';
+  netIp6.textContent = d.network.ip.ipv6 || '-';
   
   memTotal.textContent = d.system.memory.total || '-';
   memFree.textContent = d.system.memory.free || '-';

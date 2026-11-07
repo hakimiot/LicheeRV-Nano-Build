@@ -1,0 +1,111 @@
+<link rel="stylesheet" href="css/card.css">
+<style>
+  .cmp-network .iface-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .cmp-network .iface-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e2e8f0;
+  }
+
+  .cmp-network .iface-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .cmp-network .iface-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .cmp-network .iface-state {
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .cmp-network .iface-state.up { background: #dcfce7; color: #166534; }
+  .cmp-network .iface-state.down { background: #fee2e2; color: #991b1b; }
+  .cmp-network .iface-state.unknown { background: #f1f5f9; color: #64748b; }
+
+  .cmp-network .iface-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+  }
+  .cmp-network .iface-flags span {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .cmp-network .iface-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 24px;
+  }
+
+  .cmp-network .iface-body p {
+    font-size: 13px;
+    color: #334155;
+    margin: 0;
+    line-height: 1.8;
+    word-break: break-all;
+  }
+  .cmp-network .iface-body p b {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .cmp-network .ip-list {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .cmp-network .ip-item {
+    font-size: 13px;
+    color: #334155;
+    padding: 3px 0;
+    word-break: break-all;
+  }
+  .cmp-network .ip-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 6px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .cmp-network .ip-tag.v4 { background: #dbeafe; color: #1e40af; }
+  .cmp-network .ip-tag.v6 { background: #f3e8ff; color: #6b21a8; }
+  .cmp-network .ip-tag.global { background: #dcfce7; color: #166534; }
+  .cmp-network .ip-tag.link { background: #fef3c7; color: #92400e; }
+  .cmp-network .ip-tag.dynamic { background: #fce7f3; color: #9d174d; }
+
+  .cmp-network .empty {
+    padding: 40px 0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+</style>
+
+<div class="cmp-network">
+  <h2 class="card-title">网卡信息</h2>
+  <div id="iface-list" class="iface-list"></div>
+</div>

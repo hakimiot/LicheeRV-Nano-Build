@@ -20,6 +20,14 @@ const MENU_CONFIG = [
         component: 'Wlan',
         dir: 'wlan',
         api: '/api/network/wifilist'
+      },
+      {
+        id: 'network-iface',
+        title: '网卡信息',
+        icon: 'icons/menu/ethernet.svg',
+        component: 'Network',
+        dir: 'network',
+        api: '/api/network/all'
       }
     ]
   },
@@ -33,8 +41,7 @@ const MENU_CONFIG = [
         title: '设置',
         icon: 'icons/menu/settings.svg',
         component: 'Settings',
-        dir: 'settings',
-        api: '/api/settings/info'
+        dir: 'settings'
       }
     ]
   }

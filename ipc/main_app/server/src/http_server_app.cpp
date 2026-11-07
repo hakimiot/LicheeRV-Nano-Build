@@ -1,4 +1,5 @@
 #include "mainapp_log.h"
+#include "network.h"
 #include "http_server.h"
 
 void HttpServer::ServerInitApp()
@@ -24,9 +25,27 @@ void HttpServer::ServerInitApp()
         DeviceInfo::GetMemoryInfo(memoryInfo, error);
         DeviceInfo::GetDiskInfo("/", diskInfo, error);
 
+        std::string interface = NetworkInfo::GetDefaultInterface();
+        NetworkInfo::InterfaceInfo interfaceInfo = NetworkInfo::GetInterfaceInfo(interface);
+        std::string ipv4 = "0.0.0.0";
+        std::string ipv6 = "0.0.0.0";
+        if (!interfaceInfo.ipv4.empty()) {
+            ipv4 = interfaceInfo.ipv4[0].address;
+        }
+        if (!interfaceInfo.ipv6.empty()) {
+            ipv6 = interfaceInfo.ipv6[0].address;
+        }
+
         resp = {
             {"code", 200},
             {"data", {
+                {"network", {
+                    {"interface", interface},
+                    {"ip", {
+                        {"ipv4", ipv4},
+                        {"ipv6", ipv6}
+                    }}
+                }},
                 {"capture", {
                     {"width", m_context.cameraCapture.config().width},
                     {"height", m_context.cameraCapture.config().height},

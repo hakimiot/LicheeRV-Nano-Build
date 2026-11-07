@@ -66,6 +66,7 @@ SRCS += ${COMMON_PATH}/src/device_safe.cpp
 SRCS += ${COMMON_PATH}/src/file_system.cpp
 SRCS += ${COMMON_PATH}/src/power_mamage.cpp
 SRCS += ${COMMON_PATH}/src/random.cpp
+SRCS += ${COMMON_PATH}/src/network.cpp
 SRCS += ${COMMON_PATH}/src/wlan.cpp
 # SRCS += watermark/src/watermark_overlay.cpp
 

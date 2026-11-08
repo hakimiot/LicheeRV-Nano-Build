@@ -12,4 +12,8 @@ if command -v ntpdate >/dev/null 2>&1; then
 		>/dev/null 2>&1 || true
 fi
 
-/usr/bin/main_app
+/usr/bin/main_app &
+
+/usr/bin/mqtt_app &
+
+exit 0
